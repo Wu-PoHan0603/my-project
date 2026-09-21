@@ -9,6 +9,6 @@ class ClientController extends BaseController
 {
     public function index()
     {
-        //
+        return view('clients/index');
     }
 }
