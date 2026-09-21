@@ -11,4 +11,9 @@ class ClientController extends BaseController
     {
         return view('clients/index');
     }
+
+    public function create()
+    {
+        return view('clients/create');
+    }
 }
