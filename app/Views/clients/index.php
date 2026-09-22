@@ -22,6 +22,12 @@
         
         <main class="content">
             <h1>案主資料管理</h1>
+
+            <?php if (session()->getFlashdata('success')): ?>
+                <p>
+                    <?= esc(session()->getFlashdata('success')) ?>
+                </p>
+            <?php endif ?>
             
             <label for="keyword">搜索案主</label>
             <input type="text" name="keyword" id="keyword" placeholder="請輸入案主姓名">
