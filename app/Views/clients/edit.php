@@ -40,7 +40,13 @@
 
             <!-- 目前先建立表單畫面
             下一階段才會設定 action 與更新 Route -->
-            <form>
+            <form action="<?= base_url('clients/update/' . $client['id']) ?>" method="post">
+
+                <!--
+                    產生 CSRF Token
+                    CSRF Filter 會檢查表單是否來自自己的網站
+                -->
+                <?= csrf_field() ?>
 
                 <!-- 顯示目前修改的案主編號 -->
                 <p>
@@ -75,8 +81,14 @@
                 </div>
                 <br>
 
-                <button type="button" class="btn btn-primary">儲存修改</button>
-                <!-- 返回案主列表 -->
+                <!--
+                    type="submit" 會送出目前所在的表單
+                    btn-primary 是藍色按鈕樣式 (style.css)
+                -->
+                <button type="submit" class="btn btn-primary">儲存修改</button>
+
+                <!-- 返回列表只是前往其他頁面
+                所以繼續使用 a，再套用按鈕樣式 -->
                 <a class="btn btn-warning" href="<?= base_url('clients') ?>">返回列表</a>
 
             </form>

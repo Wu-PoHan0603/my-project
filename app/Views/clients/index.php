@@ -76,30 +76,87 @@
                                     <th>案主姓名</th>
                                     <th>案主地址</th>
                                     <th>路線編號</th>
+                                    <th>建立時間</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
 
                             <tbody>
-                                <?php foreach ($clients as $client): ?>
+                            <?php foreach ($clients as $client): ?>
 
-                                <!-- foreach 會逐筆讀取案主資料
-                                    每次取出一筆資料放入 $client -->
+                                <?php
+                                // 每次 foreach 取得一位案主後
+                                // 先準備建立時間的顯示內容
+                                $createdAtTaipei = '';
 
-                                    <tr>
-                                    <td><?= esc($client['id']) ?></td>
-                                    <td><?= esc($client['ct_name']) ?></td>
-                                    <td><?= esc($client['ct_address']) ?></td>
-                                    <td><?= esc($client['route_no']) ?></td>
-                                    
-                                    <!--
-                                        將目前案主的 id 放入網址
-                                        例如案主 id 是 2，網址會變成 /clients/edit/2
-                                    -->
-                                    <td><a href="<?= base_url('clients/edit/' . $client['id']) ?>">修改</a></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
+                                // 確認這一筆案主有 created_at
+                                // 避免空值傳入 Time::parse()
+                                if (! empty($client['created_at'])) {
+                                    // 將資料庫的 created_at 解讀為 UTC 時間
+                                    $createdAtUtc = \CodeIgniter\I18n\Time::parse(
+                                        $client['created_at'],
+                                        'UTC'
+                                    );
+
+                                    // 將 UTC 時間轉換成台灣時區
+                                    // 這只會轉換畫面顯示，不會修改資料庫
+                                    $createdAtTaipeiObject = $createdAtUtc->setTimezone(
+                                        'Asia/Taipei'
+                                    );
+
+                                    // 將時間物件整理成年月日時分秒
+                                    $createdAtTaipei = $createdAtTaipeiObject->format(
+                                        'Y-m-d H:i:s'
+                                    );
+                                }
+                                ?>
+
+                                <!-- 每一筆案主建立一個表格資料列 -->
+                                <tr>
+                                    <!-- 第一欄：案主編號 -->
+                                    <td>
+                                        <?= esc($client['id']) ?>
+                                    </td>
+
+                                    <!-- 第二欄：案主姓名 -->
+                                    <td>
+                                        <?= esc($client['ct_name']) ?>
+                                    </td>
+
+                                    <!-- 第三欄：案主地址 -->
+                                    <td>
+                                        <?= esc($client['ct_address']) ?>
+                                    </td>
+
+                                    <!-- 第四欄：路線編號 -->
+                                    <td>
+                                        <?= esc($client['route_no']) ?>
+                                    </td>
+
+                                    <!-- 第五欄：轉換完成的台灣建立時間 -->
+                                    <td>
+                                        <?= esc($createdAtTaipei) ?>
+                                    </td>
+
+                                    <!-- 第六欄：操作按鈕 -->
+                                    <td>
+                                        <!--
+                                            將案主 id 放進修改網址
+                                            例如 id 是 2，網址就是 clients/edit/2
+                                        -->
+                                        <a
+                                            class="btn btn-warning"
+                                            href="<?= base_url(
+                                                'clients/edit/' . $client['id']
+                                            ) ?>"
+                                        >
+                                            修改
+                                        </a>
+                                    </td>
+                                </tr>
+
+                            <?php endforeach; ?>
+                        </tbody>
                         </table>
                     <?php else: ?>
                         <!-- $clients 沒有資料時顯示提示文字 -->
