@@ -55,5 +55,35 @@ class ClientController extends BaseController
             ->to('/clients')
             ->with('success', '案主新增成功');
     }
+
+    //接收案主編號
+    public function edit(int $id) //id前面要宣告類別 不然會有提示
+    {
+        //建立ClientModel物件
+        //用來查詢clients資料表
+        $clientModel = new ClientModel();
+
+        //根據主鍵id查詢一位案主
+        //如果id是2,就會查詢id=2的資料
+        $client = $clientModel->find($id);
+
+        //如果查不到案主資料
+        if (null === $client) {
+            //回到案主列表
+            //並暫存一則錯誤訊息
+            return redirect()
+                ->to('clients')
+                ->with('error', '找不到指定的案主資料');
+        }
+
+        //將查詢到的案主資料放入$data
+        $data = [
+            'client' => $client,
+        ];
+        
+        //載入修改案主葉面
+        //並把$data傳給View
+        return view('clients/edit', $data);
+    }
     
 }

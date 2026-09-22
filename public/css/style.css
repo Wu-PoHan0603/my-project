@@ -82,3 +82,147 @@ body {
     /* 改變背景顏色，方便查看目前所在資料列 */
     background-color: #fff9d6;
 }
+
+/* 所有按鈕與按鈕外觀連結的共用樣式 */
+.btn {
+    /* 讓超連結可以設定上下內距與大小 */
+    display: inline-block;
+
+    /* 按鈕內部上下 8px、左右 14px */
+    padding: 8px 14px;
+
+    /* 移除超連結底線 */
+    text-decoration: none;
+
+    /* 建立淺灰色框線 */
+    border: 1px solid #cccccc;
+
+    /* 按鈕圓角 */
+    border-radius: 4px;
+
+    /* 滑鼠移到按鈕時顯示手指游標 */
+    cursor: pointer;
+
+    /* 使用與網頁相同的字體 */
+    font-family: inherit;
+
+    /* 設定按鈕文字大小 */
+    font-size: 14px;
+
+    /* 讓按鈕內容保持在同一行 */
+    line-height: 1.2;
+}
+
+/* 主要操作按鈕，例如儲存、新增 */
+.btn-primary {
+    /* 藍色背景 */
+    background-color: #1976d2;
+
+    /* 白色文字 */
+    color: white;
+
+    /* 邊框使用相同藍色 */
+    border-color: #1976d2;
+}
+
+/* 滑鼠移到主要按鈕時 */
+.btn-primary:hover {
+    /* 使用較深的藍色 */
+    background-color: #125ca4;
+
+    /* 邊框同步變深 */
+    border-color: #125ca4;
+}
+
+/* 次要操作，例如返回、取消 */
+.btn-secondary {
+    /* 灰色背景 */
+    background-color: #6c757d;
+
+    /* 白色文字 */
+    color: white;
+
+    /* 灰色邊框 */
+    border-color: #6c757d;
+}
+
+/* 滑鼠移到次要按鈕時 */
+.btn-secondary:hover {
+    /* 使用較深的灰色 */
+    background-color: #565e64;
+
+    /* 邊框同步變深 */
+    border-color: #565e64;
+}
+
+/* 修改按鈕 */
+.btn-warning {
+    /* 黃色背景 */
+    background-color: #ffc107;
+
+    /* 深色文字，增加對比 */
+    color: #212529;
+
+    /* 黃色邊框 */
+    border-color: #ffc107;
+}
+
+/* 滑鼠移到修改按鈕時 */
+.btn-warning:hover {
+    /* 使用較深的黃色 */
+    background-color: #e0a800;
+
+    /* 邊框同步變深 */
+    border-color: #e0a800;
+}
+
+/* 危險操作，例如刪除 */
+.btn-danger {
+    /* 紅色背景 */
+    background-color: #dc3545;
+
+    /* 白色文字 */
+    color: white;
+
+    /* 紅色邊框 */
+    border-color: #dc3545;
+}
+
+/* 滑鼠移到刪除按鈕時 */
+.btn-danger:hover {
+    /* 使用較深的紅色 */
+    background-color: #b02a37;
+
+    /* 邊框同步變深 */
+    border-color: #b02a37;
+}
+
+/* Sidebar 的頁面連結 */
+.sidebar a {
+    /* 讓每個連結占滿 Sidebar 寬度 */
+    display: block;
+
+    /* 增加連結內部留白 */
+    padding: 10px 12px;
+
+    /* 每個選單項目保留間距 */
+    margin-bottom: 6px;
+
+    /* 移除底線 */
+    text-decoration: none;
+
+    /* 設定文字顏色 */
+    color: white;
+
+    /* 設定圓角 */
+    border-radius: 4px;
+}
+
+/* 滑鼠移到 Sidebar 連結時 */
+.sidebar a:hover {
+    /* 使用半透明白色背景 */
+    background-color: rgba(255, 255, 255, 0.12);
+
+    /* 保持文字清楚 */
+    color: #ffd54f;
+}

@@ -91,6 +91,11 @@
                                     <td><?= esc($client['ct_name']) ?></td>
                                     <td><?= esc($client['ct_address']) ?></td>
                                     <td><?= esc($client['route_no']) ?></td>
+                                    
+                                    <!--
+                                        將目前案主的 id 放入網址
+                                        例如案主 id 是 2，網址會變成 /clients/edit/2
+                                    -->
                                     <td><a href="<?= base_url('clients/edit/' . $client['id']) ?>">修改</a></td>
                                     </tr>
                                 <?php endforeach; ?>
