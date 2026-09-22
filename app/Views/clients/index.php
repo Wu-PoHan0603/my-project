@@ -91,7 +91,7 @@
                                     <td><?= esc($client['ct_name']) ?></td>
                                     <td><?= esc($client['ct_address']) ?></td>
                                     <td><?= esc($client['route_no']) ?></td>
-                                    <td><button type="submit">修改</button></td>
+                                    <td><a href="<?= base_url('clients/edit/' . $client['id']) ?>">修改</a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
