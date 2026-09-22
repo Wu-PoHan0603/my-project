@@ -39,3 +39,46 @@ body {
     flex: 1;
     padding: 32px;
 }
+
+/* 案主資料表格外層區域 */
+.client-table-section {
+    /* 表格區域與搜尋欄之間保留距離 */
+    margin-top: 30px;
+}
+
+/* 案主資料表格 */
+.client-table {
+    /* 表格使用全部可用寬度 */
+    width: 100%;
+
+    /* 合併相鄰儲存格的框線 */
+    border-collapse: collapse;
+
+    /* 表格背景設為白色 */
+    background-color: white;
+}
+
+/* 表頭與資料格共同設定 */
+.client-table th,
+.client-table td {
+    /* 設定灰色框線 */
+    border: 1px solid #cccccc;
+
+    /* 儲存格內部留白 */
+    padding: 10px;
+
+    /* 文字靠左排列 */
+    text-align: left;
+}
+
+/* 表格標題列 */
+.client-table th {
+    /* 表頭使用淺灰色背景 */
+    background-color: #eeeeee;
+}
+
+/* 滑鼠移到資料列時 */
+.client-table tbody tr:hover {
+    /* 改變背景顏色，方便查看目前所在資料列 */
+    background-color: #fff9d6;
+}

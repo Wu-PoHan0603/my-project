@@ -11,7 +11,26 @@ class ClientController extends BaseController
 {
     public function index()
     {
-        return view('clients/index');
+        // 建立 ClientModel 物件
+        // 之後透過 $clientModel 操作 clients 資料表
+        $clientModel = new ClientModel();
+
+        // 查詢 clients 資料表中的所有案主
+        // orderBy('id', 'DESC')：按照 id 由大到小排列
+        // findAll()：取得所有尚未被軟刪除的資料
+        $clients = $clientModel
+            ->orderBy('id', 'DESC')
+            ->findAll();
+
+        // 準備傳入 View 的資料
+        // 陣列鍵 clients 會變成 View 裡的 $clients
+        $data = [
+            'clients' => $clients,
+        ];
+
+        // 載入 app/Views/clients/index.php
+        // 同時將 $data 傳給 View
+        return view('clients/index', $data);
     }
 
     public function create()
