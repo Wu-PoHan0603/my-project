@@ -205,5 +205,14 @@ class ClientController extends BaseController
             ->orderBy('deleted_at', 'DESC')
             ->findAll();
 
+        //將查詢結果放入$data
+        //deletedClients會成為View裡的$deletedClients
+        $data = [
+            'deletedClients' => $deletedClients,
+        ];
+
+        //載入資源回收桶View
+        //對應app/View/clients/trash.php
+        return view('clients/trash', $data);
     }
 }

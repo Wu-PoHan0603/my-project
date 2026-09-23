@@ -17,7 +17,7 @@
                 <a href="#">首頁</a>
                 <a href="<?= base_url('clients') ?>">案主資料</a>
                 <a href="<?= base_url('clients/create') ?>">新增案主</a>
-                <a href="#">資源回收桶</a>
+                <a href="<?php base_url('clients/trash') ?>">資源回收桶</a>
                 <a href="#">登出</a>
             </nav>
         </aside>

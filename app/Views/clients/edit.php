@@ -27,7 +27,7 @@
                 <!-- 前往新增案主列表 -->
                 <a href="<?= base_url('clients/create') ?>">新增案主</a>
                 <!-- 尚未建立資源回收桶Route,所以暫時使用 # -->
-                <a href="#">資源回收桶</a>
+                <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
                 <!-- 尚未建立登出Route,所以暫時使用 # -->
                 <a href="#">登出</a>
             </nav>

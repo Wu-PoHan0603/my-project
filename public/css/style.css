@@ -1,43 +1,98 @@
+/* 讓寬度計算包含 padding 與 border */
 * {
     box-sizing: border-box;
 }
 
+/* 移除瀏覽器預設的 body 外距 */
 body {
     margin: 0;
-    font-family: Arial, "Microsoft JhengHei", sans-serif;
     background-color: #f5f6f8;
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
 }
 
+/* 左右並排的主要布局 */
 .layout {
     display: flex;
     min-height: 100vh;
 }
 
+/* 左側選單 */
 .sidebar {
+    /* 固定 Sidebar 寬度 */
     width: 220px;
+
+    /* 避免空間不足時被壓縮 */
+    flex-shrink: 0;
+
+    /* Sidebar 內部留白 */
     padding: 24px;
-    color: white;
-    background-color: #263238;
+
+    color: #ffffff;
+    background-color: #24333a;
 }
 
+/* Sidebar 標題 */
 .sidebar h2 {
     margin-top: 0;
+    margin-bottom: 24px;
 }
 
-.sidebar a {
+/* Sidebar 導覽區 */
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+
+    /* 每個選單之間的距離 */
+    gap: 8px;
+}
+
+/* Sidebar 超連結 */
+.sidebar nav a {
     display: block;
-    padding: 10px 0;
-    color: white;
+    padding: 10px 12px;
+    border-radius: 4px;
+    color: #ffffff;
     text-decoration: none;
 }
 
-.sidebar a:hover {
-    color: #ffd54f;
+/* 滑鼠移到選單時 */
+.sidebar nav a:hover {
+    background-color: #34474f;
 }
 
+/* 目前所在頁面的選單 */
+.sidebar nav a.active {
+    color: #24333a;
+    background-color: #ffc107;
+}
+
+/* 右側主要內容 */
 .content {
+    /* 自動使用 Sidebar 以外的剩餘空間 */
     flex: 1;
-    padding: 32px;
+
+    /* 上下 36px，左右 32px 的內距 */
+    /* 這是解決內容緊貼 Sidebar 的主要設定 */
+    padding: 36px 32px;
+
+    /* 防止表格太寬時破壞 Flex 布局 */
+    min-width: 0;
+}
+
+/* 頁面主標題 */
+.content h1 {
+    /* 移除標題上方預設距離 */
+    margin-top: 0;
+
+    /* 標題與下方內容保留距離 */
+    margin-bottom: 16px;
+}
+
+/* 資源回收桶的說明文字 */
+.content > p {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: #555555;
 }
 
 /* 案主資料表格外層區域 */
@@ -48,39 +103,44 @@ body {
 
 /* 案主資料表格 */
 .client-table {
-    /* 表格使用全部可用寬度 */
+    /* 表格寬度依內容或容器調整 */
     width: 100%;
 
-    /* 合併相鄰儲存格的框線 */
+    /* 最大寬度，避免資料少時表格拉得過寬 */
+    max-width: 900px;
+
+    /* 合併相鄰的框線 */
     border-collapse: collapse;
 
-    /* 表格背景設為白色 */
-    background-color: white;
+    /* 與上方內容保持距離 */
+    margin-top: 20px;
+
+    /* 使用白色背景 */
+    background-color: #ffffff;
 }
 
-/* 表頭與資料格共同設定 */
+/* 表頭與資料格 */
 .client-table th,
 .client-table td {
-    /* 設定灰色框線 */
+    /* 上下 12px，左右 14px */
+    padding: 12px 14px;
+
+    /* 淺灰色框線 */
     border: 1px solid #cccccc;
 
-    /* 儲存格內部留白 */
-    padding: 10px;
-
-    /* 文字靠左排列 */
+    /* 文字靠左 */
     text-align: left;
 }
 
 /* 表格標題列 */
 .client-table th {
-    /* 表頭使用淺灰色背景 */
-    background-color: #eeeeee;
+    background-color: #e9ecef;
+    font-weight: bold;
 }
 
-/* 滑鼠移到資料列時 */
+/* 滑鼠移到資料列時變色 */
 .client-table tbody tr:hover {
-    /* 改變背景顏色，方便查看目前所在資料列 */
-    background-color: #fff9d6;
+    background-color: #f2f6f8;
 }
 
 /* 所有按鈕與按鈕外觀連結的共用樣式 */
