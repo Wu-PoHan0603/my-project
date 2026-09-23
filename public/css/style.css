@@ -346,3 +346,56 @@ body {
 .message-error {
     color: #dc3545;
 }
+
+/* 操作按鈕的外層容器 */
+.action-buttons {
+    /* 讓裡面的修改、刪除水平排列 */
+    display: flex;
+
+    /* 垂直方向置中 */
+    align-items: center;
+
+    /* 按鈕之間保留 8px */
+    gap: 8px;
+
+    /* 避免空間不足時自動換行 */
+    flex-wrap: nowrap;
+}
+
+/* 表單預設可能有外距，所以將它清除 */
+.action-form {
+    margin: 0;
+}
+
+/* 統一超連結及按鈕的大小 */
+.action-buttons .btn {
+    /* 避免按鈕文字換行 */
+    white-space: nowrap;
+
+    /* 統一文字行高 */
+    line-height: 1.2;
+}
+
+/* 操作按鈕水平排列 */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+/* 清除表單外距 */
+.action-form {
+    margin: 0;
+}
+
+/* 防止按鈕文字換行 */
+.action-buttons .btn {
+    white-space: nowrap;
+}
+
+/* 操作欄保留足夠寬度 */
+.client-table th:last-child,
+.client-table td:last-child {
+    min-width: 200px;
+}

@@ -251,4 +251,40 @@ class ClientController extends BaseController
             ->to('clients/trash')
             ->with('success', '案主資料還原成功');
     }
+
+    public function forceDelete(int $id)
+    {
+        //建立ClientModel物件
+        $clientModel = new ClientModel();
+
+        //只從已軟刪除的資料中尋找指定編號
+        //避免直接永久刪除一般列表中的正常資料
+        $deletedClients = $clientModel
+            ->onlyDeleted()
+            ->find($id);
+
+        //如果資源回收桶找不到這筆資料
+        if (null === $deletedClients) {
+            //回到資源回收桶並顯示錯誤訊息
+            return redirect()
+                ->to('clients/trash')
+                ->with('error', '找不到指定的已刪除案主');
+        }
+
+        //第二個參數true代表永久刪除
+        //這會真正移除資料列,不是更新deleted_at
+        $deleted = $clientModel->delete($id, true);
+
+        //如果資料庫刪除失敗
+        if (! $deleted) {
+            return redirect()
+                ->to('clients/trash')
+                ->with('error', '案主資料永久刪除失敗');
+        }
+
+        //永久刪除成功後回到資源回收桶
+        return redirect()
+            ->to('clients/trash')
+            ->with('success', '案主資料已永久刪除');
+    }
 }

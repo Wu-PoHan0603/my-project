@@ -131,6 +131,16 @@
                                         <!-- 送出還原請求 -->
                                         <button type="submit" class="btn btn-success">還原</button>
                                     </form>
+
+                                    <!-- 永久刪除表單 -->
+                                    <form action="<?= base_url('clients/force-delete/' . $client['id']) ?>" class="action-form" method="post" onsubmit="return confirm ('確定要永久刪除這位案主嗎?永久刪除後無法還原!')">
+
+                                        <!-- 永久刪除請求的CSRF Token -->
+                                        <?= csrf_field() ?>
+
+                                        <!-- 送出永久刪除請求 -->
+                                        <button type="submit" class="btn btn-danger">永久刪除</button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach ?>

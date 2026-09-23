@@ -42,3 +42,8 @@ $routes->post('clients/delete/(:num)', 'ClientController::delete/$1');
 //(:num) 代表網址這個位置只能是數字
 //$1 會將數字傳給restore()方法
 $routes->post('clients/restore/(:num)', 'ClientController::restore/$1');
+
+//接收永久刪除案主的POST請求
+//(:num) 只能匹配數字
+//$1 會將網址中的案主編號傳給forceDelete()
+$routes->post('clients/force-delete/(:num)', 'ClientController::forceDelete/$1');

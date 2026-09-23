@@ -147,30 +147,34 @@
 
                                     <!-- 第六欄：操作按鈕 -->
                                     <td>
-                                        <!--
-                                            將案主 id 放進修改網址
-                                            例如 id 是 2，網址就是 clients/edit/2
-                                        -->
-                                        <a
-                                            class="btn btn-warning"
-                                            href="<?= base_url(
-                                                'clients/edit/' . $client['id']
-                                            ) ?>"
-                                        >
-                                            修改
-                                        </a>
-                                        <!-- 刪除會改變資料庫所以使用 POST 表單，不能使用一般 GET 超連結 -->
-                                        <form 
-                                            action="<?= base_url('clients/delete/' . $client['id']) ?>" 
-                                            class="delete-from" 
-                                            method="post" 
-                                            onsubmit="return confirm('確定要刪除這位案主嗎?')">
-
-                                        <!-- 產生 CSRF Token防止其他網站冒用使用者身分送出刪除請求 -->
-                                        <?= csrf_field() ?>
-
-                                        <!-- 送出刪除表單 -->
-                                        <button type="submit" class="btn btn-danger">刪除</button>
+                                        <!-- action-buttons是按鈕排列容器 CSS會讓容器裡的按鈕水平並排 -->
+                                        <div class="action-buttons">
+                                            
+                                            <!--
+                                                將案主 id 放進修改網址
+                                                例如 id 是 2，網址就是 clients/edit/2
+                                            -->
+                                            <a
+                                                class="btn btn-warning"
+                                                href="<?= base_url(
+                                                    'clients/edit/' . $client['id']
+                                                ) ?>"
+                                            >
+                                                修改
+                                            </a>
+                                            <!-- 刪除會改變資料庫所以使用 POST 表單，不能使用一般 GET 超連結 -->
+                                            <form 
+                                                action="<?= base_url('clients/delete/' . $client['id']) ?>" 
+                                                class="delete-from" 
+                                                method="post" 
+                                                onsubmit="return confirm('確定要刪除這位案主嗎?')">
+    
+                                            <!-- 產生 CSRF Token防止其他網站冒用使用者身分送出刪除請求 -->
+                                            <?= csrf_field() ?>
+    
+                                            <!-- 送出刪除表單 -->
+                                            <button type="submit" class="btn btn-danger">刪除</button>
+                                        </div>
 
                                         </form>
                                     </td>
