@@ -31,9 +31,16 @@
                 Flashdata 只會顯示一次
             -->
             <?php if (session()->getFlashdata('success')): ?>
-                <p>
+                <p class="message-success">
                     <!-- 使用 esc() 安全顯示成功訊息 -->
                     <?= esc(session()->getFlashdata('success')) ?>
+                </p>
+            <?php endif ?>
+
+            <?php if (session()->getFlashdata('error')):  ?>
+                <p class="message-error">
+                    <!-- 顯示 Controller 傳來的一次性錯誤訊息esc() 防止訊息被當成 HTML 執行 -->
+                    <?= esc(session()->getFlashdata('error')) ?>
                 </p>
             <?php endif ?>
 
@@ -152,6 +159,20 @@
                                         >
                                             修改
                                         </a>
+                                        <!-- 刪除會改變資料庫所以使用 POST 表單，不能使用一般 GET 超連結 -->
+                                        <form 
+                                            action="<?= base_url('clients/delete/' . $client['id']) ?>" 
+                                            class="delete-from" 
+                                            method="post" 
+                                            onsubmit="return confirm('確定要刪除這位案主嗎?')">
+
+                                        <!-- 產生 CSRF Token防止其他網站冒用使用者身分送出刪除請求 -->
+                                        <?= csrf_field() ?>
+
+                                        <!-- 送出刪除表單 -->
+                                        <button type="submit" class="btn btn-danger">刪除</button>
+
+                                        </form>
                                     </td>
                                 </tr>
 

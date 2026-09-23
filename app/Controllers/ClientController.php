@@ -159,5 +159,51 @@ class ClientController extends BaseController
             ->to('/clients')
             ->with('success', '案主資料修改成功');
     }
-        
+
+    // 接收 Route 傳進來的案主編號
+    public function delete(int $id)
+    {
+        //建立ClientModel物件
+        //準備操作clients資料表
+        $clientModel = new ClientModel();
+
+        //先查詢指定的案主是否存在
+        $client = $clientModel->find($id);
+
+        if (null === $client) {
+            //回到案主列表
+            //並顯示一次性錯誤訊息
+            return redirect()
+                ->to('/clients')
+                ->with('error', '找不到指定的案主資料');
+        }
+
+        //軟刪除指定的案主
+        //因為Model已啟用useSoftDeletes
+        //所以這邊只會寫入delete_at
+        $clientModel->delete($id);
+
+        //刪除完成後返回案主列表
+        //success是一次性的Flashdata訊息
+        return redirect()
+            ->to('/clients')
+            ->with('success', '案主已移至資源回收桶');
+    }
+
+    // 顯示資源回收桶
+    public function trash()
+    {
+        //建立ClientModel物件
+        //用來查詢clients資料表
+        $clientModel = new ClientModel();
+
+        // 1.onlyDeleted() 只查詢已軟刪除的資料 也就是 deleted_at 有刪除時間的資料
+        // 2.orderBy() 依照刪除時間倒序排列最新刪除的資料會顯示在最上方
+        // 3.findAll() 執行查詢並取得全部結果
+        $deletedClients = $clientModel
+            ->onlyDeleted()
+            ->orderBy('deleted_at', 'DESC')
+            ->findAll();
+
+    }
 }

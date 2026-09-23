@@ -18,6 +18,13 @@ $routes->get('clients/create', 'ClientController::create');
 // $1 代表網址中 (:num) 取得的數字
 $routes->get('clients/edit/(:num)','ClientController::edit/$1');
 
+//顯示資源回收桶
+//使用GET,因為目前只讀取及顯示資料
+$routes->get('clients/trash', 'ClientController::trash');
+
+
+
+
 //post 操作
 // 對應網址：POST clients
 $routes->post('clients', 'ClientController::store'); 
@@ -25,3 +32,8 @@ $routes->post('clients', 'ClientController::store');
 // 接收指定案主送出的修改資料
 // 例如 POST /clients/update/2
 $routes->post('clients/update/(:num)', 'ClientController::update/$1');
+
+//接收刪除案主的POST請求 因為會改變資料狀態 不使用GET
+//(:num) 代表網址必須提供數字編號
+//$1 會把網址中的編號傳給delete()方式
+$routes->post('clients/delete/(:num)', 'ClientController::delete/$1');

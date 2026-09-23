@@ -226,3 +226,36 @@ body {
     /* 保持文字清楚 */
     color: #ffd54f;
 }
+
+/* 刪除表單和修改按鈕排列在同一行 */
+.delete-form {
+    display: inline-block;
+    margin-left: 6px;
+}
+
+/* 所有按鈕的共用外觀 */
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 修改按鈕 */
+.btn-warning {
+    color: #212529;
+    background-color: #ffc107;
+}
+
+/* 刪除按鈕 */
+.btn-danger {
+    color: #ffffff;
+    background-color: #dc3545;
+}
+
+/* 滑鼠移到刪除按鈕時稍微變暗 */
+.btn-danger:hover {
+    background-color: #bb2d3b;
+}
