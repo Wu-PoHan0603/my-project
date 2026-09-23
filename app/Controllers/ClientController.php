@@ -215,4 +215,40 @@ class ClientController extends BaseController
         //對應app/View/clients/trash.php
         return view('clients/trash', $data);
     }
+
+    //接收Route傳來的案主編號
+    public function restore(int $id)
+    {
+        //建立ClinetModel物件
+        $clientModel = new ClientModel();
+
+        //onlyDeleted()表示只搜尋已軟刪除的資料
+        //避免把原本就正常的資料當成回收桶資料
+        $deletedClients = $clientModel
+            ->onlyDeleted()
+            ->findAll($id);
+
+        //如果回收桶裡找不到這筆資料
+        if (null === $deletedClients) {
+            //回到資源回收桶並顯示錯誤訊息
+            return redirect()
+                ->to('clients/trash')
+                ->with('error', '找不到指定的已刪除案主');
+        }
+
+        //呼叫Model自訂的還原方式
+        $restore = $clientModel->restoreClient($id);
+
+        //如果資料庫更新失敗
+        if (! $restore) {
+            //回到資源回收桶並顯示錯誤訊息
+            return redirect()
+                ->to('clients/trash')
+                ->with('error', '案主資料還原失敗');
+        }
+
+        return redirect()
+            ->to('clients/trash')
+            ->with('success', '案主資料還原成功');
+    }
 }

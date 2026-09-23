@@ -41,6 +41,24 @@
             <!-- 頁面標題 -->
             <h1>資源回收桶</h1>
 
+            <!-- 判斷是否有還原成功訊息 -->
+            <?php if (session()->getFlashdata('success')): ?>
+
+                <!-- esc()防止訊息被當成HTML執行 -->
+                <p class="message-success">
+                    <?= esc(session()->getFlashdata('success')) ?>
+                </p>
+            <?php endif ?>
+
+            <!-- 判斷是否有錯誤訊息 -->
+            <?php if (session()->getFlashdata('error')): ?>
+
+                <!-- 顯示一次性的錯誤訊息 -->
+                <p class="message-error">
+                    <?= esc(session()->getFlashdata('error')) ?>
+                </p>
+            <?php endif ?>
+
             <!-- 說明軟刪除資料仍然保留在資料庫 -->
             <p>
                 這裡顯示已軟刪除的案主資料
@@ -103,8 +121,17 @@
                                 <!-- 台灣時間的刪除時間 -->
                                 <td><?= esc($deletedAtTaipei) ?></td>
 
-                                <!-- 解除刪除 -->
-                                <td><button  class="btn btn-warning" type="button">解除刪除</button></td>
+                                <!-- 還原操作 -->
+                                <td>
+                                    <!-- 還原會修改資料庫 因此使用POST表單，不能使用普通GET連結 -->
+                                    <form action="<?= base_url('clients/restore/' . $client['id']) ?>" class="action-form" method="post" onsubmit="return confirm('確定要還原這位案主嗎?')">
+                                        <!-- 產生csrf Token 訪指其他網站偽造還原請求 -->
+                                        <?= csrf_field() ?>
+
+                                        <!-- 送出還原請求 -->
+                                        <button type="submit" class="btn btn-success">還原</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>

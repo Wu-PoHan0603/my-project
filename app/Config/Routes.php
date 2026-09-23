@@ -37,3 +37,8 @@ $routes->post('clients/update/(:num)', 'ClientController::update/$1');
 //(:num) 代表網址必須提供數字編號
 //$1 會把網址中的編號傳給delete()方式
 $routes->post('clients/delete/(:num)', 'ClientController::delete/$1');
+
+//接收還原案主的POST請求 會改變資料庫
+//(:num) 代表網址這個位置只能是數字
+//$1 會將數字傳給restore()方法
+$routes->post('clients/restore/(:num)', 'ClientController::restore/$1');

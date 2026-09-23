@@ -319,3 +319,30 @@ body {
 .btn-danger:hover {
     background-color: #bb2d3b;
 }
+
+/* 表格中的操作表單不另外占滿整行 */
+.action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+/* 還原按鈕使用綠色 */
+.btn-success {
+    color: #ffffff;
+    background-color: #198754;
+}
+
+/* 滑鼠移到還原按鈕時變深 */
+.btn-success:hover {
+    background-color: #157347;
+}
+
+/* 成功訊息 */
+.message-success {
+    color: #198754;
+}
+
+/* 錯誤訊息 */
+.message-error {
+    color: #dc3545;
+}
