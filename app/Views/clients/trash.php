@@ -36,7 +36,7 @@
         </aside>
 
         <!-- 右側主要內容 -->
-        <main>
+        <main class="content">
 
             <!-- 頁面標題 -->
             <h1>資源回收桶</h1>
@@ -58,6 +58,7 @@
                             <th>案主地址</th>
                             <th>路線編號</th>
                             <th>刪除時間</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
 
@@ -101,6 +102,9 @@
 
                                 <!-- 台灣時間的刪除時間 -->
                                 <td><?= esc($deletedAtTaipei) ?></td>
+
+                                <!-- 解除刪除 -->
+                                <td><button  class="btn btn-warning" type="button">解除刪除</button></td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>
