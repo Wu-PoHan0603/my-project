@@ -45,23 +45,20 @@
             <?php endif ?>
 
             <!-- 搜尋案主區域 -->
-            <section class="search-section">
-                <!--
-                    for="keyword" 對應輸入框的 id="keyword"
-                    點擊文字時，游標會進入輸入框
-                -->
-
+            <!-- 搜尋表單使用GET action指定送回/clients -->
+            <form action="<?= base_url('clients') ?>" class="search-form" method="get">
+                <!-- label的for對應輸入框id 點擊文字時，游標會進入輸入框 -->
                 <label for="keyword">搜索案主</label>
-                <!-- 案主姓名搜尋輸入框 -->
 
-                <input type="text" name="keyword" id="keyword" placeholder="請輸入案主姓名">
+                <!-- name="keyword" 是送給Controller 的欄位名稱 value 顯示目前搜尋關鍵字 搜尋後輸入框不會變回空白 -->
+                <input type="text" id="keyword" name="keyword" value="<?= esc($keyword ?? '') ?>" placeholder="請輸入案主名稱">
 
-                <!--
-                    目前按鈕只有畫面
-                    搜尋功能會在後續章節實作
-                -->
-                <button type="button">搜尋</button>
-            </section>
+                <!-- 送出GET搜尋請求 -->
+                <button type="submit" class="btn btn-primary">搜尋</button>
+
+                <!-- 清除搜尋條件 直接回到沒有keyword的/clients -->
+                <a href="<?= base_url('clients') ?>" class="btn btn-secondary">清除</a>
+            </form>
 
             <!-- 案主資料表格區域 -->
             <section class="client-table-section">
@@ -173,16 +170,17 @@
                                             <?= csrf_field() ?>
     
                                             <!-- 送出刪除表單 -->
-                                            <button type="submit" class="btn btn-danger">刪除</button>
+                                            <button type="submit" class="btn btn-danger">刪除</button> 
+                                            </form>
                                         </div>
-
-                                        </form>
                                     </td>
                                 </tr>
 
                             <?php endforeach; ?>
                         </tbody>
                         </table>
+                        <!-- 顯示 clients 這組分頁連結 -->
+                        <?= isset($pager) ? $pager->links('clients') : '' ?>
                     <?php else: ?>
                         <!-- $clients 沒有資料時顯示提示文字 -->
                         <p>目前沒有案主資料</p>

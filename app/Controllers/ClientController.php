@@ -15,22 +15,33 @@ class ClientController extends BaseController
         // 之後透過 $clientModel 操作 clients 資料表
         $clientModel = new ClientModel();
 
-        // 查詢 clients 資料表中的所有案主
-        // orderBy('id', 'DESC')：按照 id 由大到小排列
-        // findAll()：取得所有尚未被軟刪除的資料
+        //取得網址中的keyword
+        //例如/clients?keyword=王
+        //(string) 避免沒有keyword時取得null
+        //trim()移除關鍵字前後的空白
+        $keyword = trim(
+            (string) $this->request->getGet('keyword')
+        );
+
+        //只有關鍵字不是空白食材加入搜尋條件
+        if ('' !== $keyword) {
+            //like()進行部分文字比對
+            //ct_name是要搜尋的資料表欄位
+            //$keyword 是使用者輸入的關鍵字
+            $clientModel->like('ct_name', $keyword);
+        }
+
+        // 取代原本的findAll()，改成每頁顯示5筆
+        $pageSize = 5;
         $clients = $clientModel
             ->orderBy('id', 'DESC')
-            ->findAll();
+            ->paginate($pageSize, 'clients');
 
-        // 準備傳入 View 的資料
-        // 陣列鍵 clients 會變成 View 裡的 $clients
-        $data = [
+        return view('clients/index',[
             'clients' => $clients,
-        ];
-
-        // 載入 app/Views/clients/index.php
-        // 同時將 $data 傳給 View
-        return view('clients/index', $data);
+            'keyword' => $keyword,
+            'pager' => $clientModel->pager,
+        ]);
     }
 
     public function create()
@@ -41,16 +52,64 @@ class ClientController extends BaseController
     public function store()
     {
         $data = [
-            'ct_name' => $this->request->getPost('ct_name'),
-            'ct_address' => $this->request->getPost('ct_address'),
-            'route_no' => $this->request->getPost('route_no'),
+            'ct_name' => trim((string) $this->request->getPost('ct_name')),
+            'ct_address' => trim((string) $this->request->getPost('ct_address')),
+            'route_no' => trim((string) $this->request->getPost('route_no')),
         ];
-        
-        //建立Model物件
+
+        // 設定每個欄位的錯誤訊息
+        // 設定每個欄位的驗證規則與畫面標籤
+        $rules = [
+            'ct_name' => [
+                'label' => '案主姓名',
+                'rules' => 'required|min_length[2]|max_length[100]',
+            ],
+            'ct_address' => [
+                'label' => '案主地址',
+                'rules' => 'required|max_length[255]',
+            ],
+            'route_no' => [
+                'label' => '路線編號',
+                'rules' => 'required|integer',
+            ],
+        ];
+
+        // 依照「欄位名稱 → 驗證規則」設定中文錯誤訊息
+        $messages = [
+            'ct_name' => [
+                'required'   => '請輸入案主姓名。',
+                'min_length' => '案主姓名至少需要 2 個字。',
+                'max_length' => '案主姓名不可超過 100 個字。',
+            ],
+            'ct_address' => [
+                'required'   => '請輸入案主地址。',
+                'max_length' => '案主地址不可超過 255 個字。',
+            ],
+            'route_no' => [
+                'required' => '請輸入路線編號。',
+                'integer'  => '路線編號必須是整數。',
+            ],
+        ];
+
+        //驗證失敗時返回新增表單，保留輸入內容及錯誤訊息。
+        if (! $this->validateData($data, $rules, $messages)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $this->validator->getErrors());
+        }
+
+        //只取出通過驗證的欄位資料
+        $vaildData = $this->validator->getValidated();
+
+        //路線編號通過整數驗證，再轉成PHP整數
+        $vaildData['route_no'] = (int) $vaildData['route_no'];
+
+        //請Model將通過驗證的資料新增至資料庫
         $clientModel = new ClientModel();
-        //執行新增
-        $clientModel->insert($data);
-        //新增後重新導向
+        $clientModel->insert($vaildData);
+
+        //新增完成後回到案主列表，並顯示一次性成功訊息
         return redirect()
             ->to('/clients')
             ->with('success', '案主新增成功');

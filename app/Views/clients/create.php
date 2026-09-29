@@ -24,6 +24,22 @@
             <main class="content">
                 <h1>新增案主</h1>
 
+                <?php 
+                //取得Controller暫存在Session的驗證錯誤
+                $errors = session()->getFlashdata('error') ?? [] ;
+                ?>
+
+                <?php if (! empty($errors)): ?>
+                    <div class="message-error">
+                        <ul>
+                            <?php foreach($errors as $error): ?>
+                            <!-- esc()安全顯示錯誤文字 -->
+                            <li><?= esc($error) ?></li>
+                            <?php endforeach ?>
+                        </ul>
+                    </div>
+                <?php endif ?>
+
                 <form action="<?= base_url('clients') ?>" method="post">
                     <?= csrf_field() ?>
                     <div>

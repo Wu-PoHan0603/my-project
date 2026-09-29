@@ -399,3 +399,77 @@ body {
 .client-table td:last-child {
     min-width: 200px;
 }
+
+/* 搜尋表單 */
+.search-form {
+    /* 讓欄位水平排列 */
+    display: flex;
+
+    /* 垂直方向置中 */
+    align-items: center;
+
+    /* 各元件之間保留距離 */
+    gap: 8px;
+
+    /* 與下方資料表保留距離 */
+    margin-bottom: 28px;
+}
+
+/* 搜尋輸入框 */
+.search-form input {
+    /* 增加輸入框內部留白 */
+    padding: 7px 10px;
+
+    /* 設定輸入框寬度 */
+    width: 240px;
+
+    /* 輸入框邊線 */
+    border: 1px solid #bbbbbb;
+
+    /* 圓角 */
+    border-radius: 4px;
+}
+
+/* 將分頁項目改成水平排列，並移除清單圓點 */
+.client-table-section .pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+}
+
+/* 設定每個分頁連結的外觀 */
+.client-table-section .pagination a,
+.client-table-section .pagination span {
+    display: inline-block;
+    min-width: 38px;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #2563eb;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* 滑鼠移到頁碼上時的外觀 */
+.client-table-section .pagination a:hover {
+    background-color: #e9f2ff;
+}
+
+/* 標示目前所在的頁碼 */
+.client-table-section .pagination .active a,
+.client-table-section .pagination .active span {
+    border-color: #2563eb;
+    background-color: #2563eb;
+    color: #fff;
+}
+
+/* 呈現無法點擊的分頁項目 */
+.client-table-section .pagination .disabled a,
+.client-table-section .pagination .disabled span {
+    color: #999;
+    cursor: not-allowed;
+}
