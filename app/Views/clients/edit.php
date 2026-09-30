@@ -38,6 +38,15 @@
         <main class="content">
             <h1>修改案主</h1>
 
+            <?php if (session()->has('errors')): ?>
+                <!-- 逐條顯示Controller傳回的驗證錯誤 -->
+                <ul class="message-error">
+                    <?php foreach (session('error') as $error):?>
+                    <li><?= esc($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
             <!-- 目前先建立表單畫面
             下一階段才會設定 action 與更新 Route -->
             <form action="<?= base_url('clients/update/' . $client['id']) ?>" method="post">
@@ -61,7 +70,7 @@
                     value 放入資料庫原本的案主姓名
                     esc() 避免資料造成 XSS
                     -->
-                    <input type="text" name="ct_name" id="ct_name" value="<?= esc($client['ct_name']) ?>">
+                    <input type="text" name="ct_name" id="ct_name" value="<?= esc(old('ct_name', $client['ct_name'])) ?>">
                 </div>
                 <br>
 
@@ -69,7 +78,7 @@
                     <label for="ct_address">案主地址</label>
 
                     <!-- 顯示資料庫原本的案主地址 -->
-                    <input type="text" id="ct_address" name="ct_address" value="<?= esc($client['ct_address']) ?>">
+                    <input type="text" id="ct_address" name="ct_address" value="<?= esc(old('ct_address', $client['ct_address'])) ?>">
                 </div>
                 <br>
 
@@ -77,7 +86,7 @@
                     <label for="route_no">路線編號</label>
 
                     <!-- 顯示資料庫原本的案主路線編號 -->
-                    <input type="number" id="route_no" name="route_no" value="<?= esc($client['route_no']) ?>">
+                    <input type="number" id="route_no" name="route_no" value="<?= esc(old('route_no', $client['route_no'])) ?>">
                 </div>
                 <br>
 

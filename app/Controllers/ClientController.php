@@ -150,6 +150,42 @@ class ClientController extends BaseController
     // 例如 POST /clients/update/2，$id 就是 2
     public function update(int $id)
     {
+        //接收修改表單送來的資料，並移除文字前後的空白
+        $data = [
+            'ct_name' => trim((string) $this->request->getPost('ct_name')),
+            'ct_address' => trim((string) $this->request->getPost('ct_address')),
+            'route_no' => trim((string) $this->request->getPost('route_no')),
+        ];
+
+        //驗證規則：三個欄位都必填，路線編號必須是整數
+        $rules = [
+            'ct_name' => 'required',
+            'ct_address' => 'required',
+            'route_no' => 'required|integer',
+        ];
+
+        //每條驗證規則對應的自訂錯誤訊息
+        $messages = [
+            'ct_name' => [
+                'required' => '請輸入案主姓名。',
+            ],
+            'ct_address' => [
+                'required' => '請輸入案主地址。',
+            ],
+            'route_no' => [
+                'required' => '請輸入路線編號。',
+                'integer' => '路線編號必須是整數。',
+            ],
+        ];
+
+        //驗證失敗時回到修改頁，保留使用者輸入並顯示錯誤
+        if (! $this->validateData($data, $rules, $messages)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $this->validator->getErrors());
+        }
+
         // 建立 Model，準備操作 clients 資料表
         $clientModel = new ClientModel();
 
