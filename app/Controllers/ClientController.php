@@ -35,6 +35,7 @@ class ClientController extends BaseController
         $pageSize = 5;
         $clients = $clientModel
             ->orderBy('id', 'DESC')
+            // 第二個參數代表分頁群組名稱；第三個參數把搜尋字詞放進分頁網址
             ->paginate($pageSize, 'clients');
 
         return view('clients/index',[

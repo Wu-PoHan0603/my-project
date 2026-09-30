@@ -51,7 +51,7 @@
                 <label for="keyword">搜索案主</label>
 
                 <!-- name="keyword" 是送給Controller 的欄位名稱 value 顯示目前搜尋關鍵字 搜尋後輸入框不會變回空白 -->
-                <input type="text" id="keyword" name="keyword" value="<?= esc($keyword ?? '') ?>" placeholder="請輸入案主名稱">
+                <input type="text" id="keyword" name="keyword" value="<?= esc(old('keyword', $keyword ?? '')) ?>" placeholder="請輸入案主名稱">
 
                 <!-- 送出GET搜尋請求 -->
                 <button type="submit" class="btn btn-primary">搜尋</button>
