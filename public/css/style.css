@@ -473,3 +473,174 @@ body {
     color: #999;
     cursor: not-allowed;
 }
+
+/* 修改密碼頁：整頁置中並設定淡色背景 */
+.password-page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    margin: 0;
+    padding: 32px 16px;
+    display: grid;
+    place-items: center;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
+}
+
+/* 修改密碼表單外層卡片 */
+.password-card {
+    box-sizing: border-box;
+    width: min(100%, 460px);
+    padding: 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 16px 40px rgb(15 23 42 / 8%);
+}
+
+/* 頁面標題區域 */
+.password-header {
+    margin-bottom: 28px;
+}
+
+.password-eyebrow {
+    margin: 0 0 8px;
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.password-header h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 30px;
+}
+
+.password-description {
+    margin: 10px 0 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* 表單欄位由上往下排列，並保留欄位間距 */
+.password-form {
+    display: grid;
+    gap: 20px;
+}
+
+.password-field {
+    display: grid;
+    gap: 8px;
+}
+
+.password-field label {
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* 輸入框填滿卡片寬度 */
+.password-field input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 點入輸入框時，以藍色外框提示目前欄位 */
+.password-field input:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 4px rgb(37 99 235 / 14%);
+}
+
+.password-field small {
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* 驗證錯誤訊息 */
+.password-alert {
+    margin: 0 0 20px;
+    padding: 12px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    line-height: 1.6;
+}
+
+.password-alert-error li + li {
+    margin-top: 4px;
+}
+
+/* 讓兩個操作按鈕水平排列 */
+.password-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+/* 按鈕與返回連結共用基本樣式 */
+.password-button {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 11px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.password-button:hover {
+    transform: translateY(-1px);
+}
+
+/* 主要操作：更新密碼 */
+.password-button-primary {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.password-button-primary:hover {
+    background: #1d4ed8;
+}
+
+/* 次要操作：返回列表 */
+.password-button-secondary {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.password-button-secondary:hover {
+    background: #cbd5e1;
+}
+
+/* 手機版縮小卡片留白，按鈕平均分配寬度 */
+@media (max-width: 480px) {
+    .password-card {
+        padding: 26px 20px;
+    }
+
+    .password-header h1 {
+        font-size: 26px;
+    }
+
+    .password-actions > * {
+        flex: 1;
+    }
+}

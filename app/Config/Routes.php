@@ -25,6 +25,13 @@ $routes->get('clients/trash', 'ClientController::trash');
 // 顯示登入頁：瀏覽器用 GET 開啟 /login
 $routes->get('login', 'AuthController::login');
 
+// 顯示修改密碼頁，並要求使用者已登入
+$routes->get(
+    'change-password',
+    'AuthController::changePassword',
+    ['filter' => 'auth']
+);
+
 
 
 
@@ -56,3 +63,10 @@ $routes->post('login', 'AuthController::attemptLogin');
 
 // 登出會改變 Session，所以使用 POST
 $routes->post('logout', 'AuthController::logout');
+
+// 接收修改密碼表單，並要求使用者已登入
+$routes->post(
+    'change-password',
+    'AuthController::updatePassword',
+    ['filter' => 'auth']
+);

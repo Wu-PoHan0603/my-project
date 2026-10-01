@@ -16,7 +16,10 @@
                 <a href="<?= base_url('clients') ?>">案主資料</a>
                 <a href="<?= base_url('clients/create') ?>">新增案主</a>
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
-                
+
+                <!-- 前往修改密碼頁 -->
+                <a href="<?= base_url('change-password') ?>">修改密碼</a>
+
                 <!-- 用 POST 表單取代原本的登出連結 -->
                 <form action="<?= base_url('logout') ?>" method="post">
                     <?= csrf_field() ?>
