@@ -53,3 +53,6 @@ $routes->post('clients/force-delete/(:num)', 'ClientController::forceDelete/$1')
 
 // 接收登入表單：表單用 POST 送到 /login
 $routes->post('login', 'AuthController::attemptLogin');
+
+// 登出會改變 Session，所以使用 POST
+$routes->post('logout', 'AuthController::logout');

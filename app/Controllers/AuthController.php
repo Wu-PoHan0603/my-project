@@ -9,6 +9,12 @@ class AuthController extends BaseController
     // 顯示登入頁
     public function login()
     {
+        // 已登入就直接回案主列表，不再顯示登入表單
+        if (session()->get('isLoggedIn') === true) {
+            return redirect()->to('/clients');
+        }
+
+        // 未登入才顯示登入頁
         return view('auth/login');
     }
 
@@ -36,8 +42,8 @@ class AuthController extends BaseController
                 ->with('error', '帳號或密碼錯誤');
         }
 
-        // 登入成功後，將使用者 id 存進 Session
-        session()->regenerate();
+        // 登入成功後更新 Session ID，降低 Session 固定攻擊的風險
+        session()->regenerate(true);
         session()->set([
             'user_id'  => $user['id'],
             'username' => $user['username'],
@@ -46,5 +52,15 @@ class AuthController extends BaseController
 
         // 成功後回到案主資料列表
         return redirect()->to('/clients');
+    }
+
+    // 清除登入 Session，然後回到登入頁
+    public function logout()
+    {
+        session()->destroy();
+
+        return redirect()
+            ->to('/login')
+            ->with('success', '已成功登出');
     }
 }

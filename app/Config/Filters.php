@@ -34,6 +34,8 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        
+        // 將簡短名稱 auth 對應到 AuthFilter 類別
         'auth'          => \App\Filters\AuthFilter::class,
     ];
 
@@ -107,5 +109,8 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // 進入 /clients 和 /clients/... 網址前，先執行 auth Filter
+        'auth' => ['before' => ['clients', 'clients/*']],
+    ];
 }

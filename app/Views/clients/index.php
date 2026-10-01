@@ -16,7 +16,12 @@
                 <a href="<?= base_url('clients') ?>">案主資料</a>
                 <a href="<?= base_url('clients/create') ?>">新增案主</a>
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
-                <a href="#">登出</a>
+                
+                <!-- 用 POST 表單取代原本的登出連結 -->
+                <form action="<?= base_url('logout') ?>" method="post">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-secondary">登出</button>
+                </form>
             </nav>
         </aside>
         
