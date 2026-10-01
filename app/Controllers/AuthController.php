@@ -48,6 +48,12 @@ class AuthController extends BaseController
             'user_id'  => $user['id'],
             'username' => $user['username'],
             'isLoggedIn' => true,
+
+            // 新增：側欄要顯示的名稱；名稱空白時使用帳號名稱
+            'display_name' => $user['display_name'] ?: $user['username'],
+
+            // 新增：從 users 資料表讀取角色代碼
+            'role' => $user['role'],
         ]);
 
         // 成功後回到案主資料列表

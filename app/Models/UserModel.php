@@ -22,6 +22,7 @@ class UserModel extends Model
     protected $allowedFields    = [
         'username',
         'password_hash',
+        'display_name',
     ];
 
     protected bool $allowEmptyInserts = false;
