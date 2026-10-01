@@ -22,6 +22,9 @@ $routes->get('clients/edit/(:num)','ClientController::edit/$1');
 //使用GET,因為目前只讀取及顯示資料
 $routes->get('clients/trash', 'ClientController::trash');
 
+// 顯示登入頁：瀏覽器用 GET 開啟 /login
+$routes->get('login', 'AuthController::login');
+
 
 
 
@@ -47,3 +50,6 @@ $routes->post('clients/restore/(:num)', 'ClientController::restore/$1');
 //(:num) 只能匹配數字
 //$1 會將網址中的案主編號傳給forceDelete()
 $routes->post('clients/force-delete/(:num)', 'ClientController::forceDelete/$1');
+
+// 接收登入表單：表單用 POST 送到 /login
+$routes->post('login', 'AuthController::attemptLogin');
