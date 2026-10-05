@@ -4,7 +4,7 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
-//get 顯示
+// get 顯示
 $routes->get('/', 'Home::index');
 
 // 對應網址：GET clients
@@ -32,10 +32,19 @@ $routes->get(
     ['filter' => 'auth']
 );
 
+// 登入後才能讀取案主詳細資料
+// (:num) 代表網址中的案主編號
+// $1 會將該編號傳給 details() 方法
+$routes->get(
+    'clients/(:num)/details',
+    'ClientController::details/$1',
+    ['filter' => 'auth']
+);
 
 
 
-//post 操作
+
+// post 操作
 // 對應網址：POST clients
 $routes->post('clients', 'ClientController::store'); 
 

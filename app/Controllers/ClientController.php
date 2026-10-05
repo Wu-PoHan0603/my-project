@@ -5,6 +5,13 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 //讓 ClientController 可以使用 ClientModel。
 use App\Models\ClientModel;
+
+// 引用案主詳細資料 Model
+use App\Models\ClientProfileModel;
+
+// 引用案主附件 Model
+use App\Models\ClientAttachmentModel;
+
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ClientController extends BaseController
@@ -48,6 +55,53 @@ class ClientController extends BaseController
     public function create()
     {
         return view('clients/create');
+    }
+
+    // 讀取指定案主的主資料、詳細資料與附件清單
+    public function details(int $id)
+    {
+        // 查詢 clients 主表中的案主資料
+        // find() 找不到資料時會回傳 null
+        $clientModel = new ClientModel();
+        $client = $clientModel->find($id);
+
+        // 案主不存在或已被軟刪除時，回傳 404 JSON
+        if ($client === null) {
+            return $this->response
+                ->setStatusCode(404)
+                ->setJSON([
+                    'message' => '找不到指定的案主資料',
+                ]);
+        }
+
+        // 使用相同的案主編號查詢詳細資料
+        // 詳細資料尚未填寫時，find() 會回傳 null
+        $profileModel = new ClientProfileModel();
+        $profile = $profileModel->find($id);
+
+        // 查詢這位案主的附件
+        // 只選擇之後畫面需要的欄位，不把伺服器內部檔名送到瀏覽器
+        $attachmentModel = new ClientAttachmentModel();
+        $attachments = $attachmentModel
+            ->select([
+                'id',
+                'client_id',
+                'category',
+                'original_name',
+                'mime_type',
+                'file_size',
+                'created_at',
+            ])
+            ->where('client_id', $id)
+            ->orderBy('id', 'DESC')
+            ->findAll();
+
+        // 將三類資料以 JSON 傳回瀏覽器
+        return $this->response->setJSON([
+            'client' => $client,
+            'profile' => $profile ?? [],
+            'attachments' => $attachments,
+        ]);
     }
 
     public function store()
