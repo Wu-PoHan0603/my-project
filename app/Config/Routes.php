@@ -41,6 +41,14 @@ $routes->get(
     ['filter' => 'auth']
 );
 
+// 登入後才能讀取案主照片
+// (:num) 是案主編號，$1 會傳給 photoPreview()
+$routes->get(
+    'clients/(:num)/photo-preview',
+    'ClientController::photoPreview/$1',
+    ['filter' => 'auth']
+);
+
 
 
 

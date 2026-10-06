@@ -132,8 +132,8 @@
                 <br>
 
                 <div>
-                    <label for="ct_address">案主地址</label>
-                    <input type="text" id="ct_address" name="ct_address">
+                    <label for="ct_addr">案主地址</label>
+                    <input type="text" id="ct_addr" name="ct_addr">
                 </div>
                 <br>
 

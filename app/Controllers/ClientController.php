@@ -57,49 +57,40 @@ class ClientController extends BaseController
         return view('clients/create');
     }
 
-    // 讀取指定案主的主資料、詳細資料與附件清單
+    // 顯示指定案主的獨立詳細資料頁
     public function details(int $id)
     {
-        // 查詢 clients 主表中的案主資料
-        // find() 找不到資料時會回傳 null
-        $clientModel = new ClientModel();
+        // 建立案主主資料模型
+        $clientModel = new \App\Models\ClientModel();
+
+        // 建立案主個人資料模型
+        $profileModel = new \App\Models\ClientProfileModel();
+
+        // 建立案主附件模型
+        $attachmentModel = new \App\Models\ClientAttachmentModel();
+
+        // 依照編號查詢案主主資料
         $client = $clientModel->find($id);
 
-        // 案主不存在或已被軟刪除時，回傳 404 JSON
+        // 找不到案主時顯示 404 頁面
         if ($client === null) {
-            return $this->response
-                ->setStatusCode(404)
-                ->setJSON([
-                    'message' => '找不到指定的案主資料',
-                ]);
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound(
+                '找不到案主資料'
+            );
         }
 
-        // 使用相同的案主編號查詢詳細資料
-        // 詳細資料尚未填寫時，find() 會回傳 null
-        $profileModel = new ClientProfileModel();
-        $profile = $profileModel->find($id);
+        // 查詢案主個人資料；尚未建立時傳入空陣列
+        $profile = $profileModel->find($id) ?? [];
 
         // 查詢這位案主的附件
-        // 只選擇之後畫面需要的欄位，不把伺服器內部檔名送到瀏覽器
-        $attachmentModel = new ClientAttachmentModel();
         $attachments = $attachmentModel
-            ->select([
-                'id',
-                'client_id',
-                'category',
-                'original_name',
-                'mime_type',
-                'file_size',
-                'created_at',
-            ])
             ->where('client_id', $id)
-            ->orderBy('id', 'DESC')
             ->findAll();
 
-        // 將三類資料以 JSON 傳回瀏覽器
-        return $this->response->setJSON([
+        // 顯示獨立的 HTML 詳細資料頁
+        return view('clients/details', [
             'client' => $client,
-            'profile' => $profile ?? [],
+            'profile' => $profile,
             'attachments' => $attachments,
         ]);
     }
@@ -108,7 +99,7 @@ class ClientController extends BaseController
     {
         $data = [
             'ct_name' => trim((string) $this->request->getPost('ct_name')),
-            'ct_address' => trim((string) $this->request->getPost('ct_address')),
+            'ct_addr' => trim((string) $this->request->getPost('ct_addr')),
             'route_no' => trim((string) $this->request->getPost('route_no')),
         ];
 
@@ -119,7 +110,7 @@ class ClientController extends BaseController
                 'label' => '案主姓名',
                 'rules' => 'required|min_length[2]|max_length[100]',
             ],
-            'ct_address' => [
+            'ct_addr' => [
                 'label' => '案主地址',
                 'rules' => 'required|max_length[255]',
             ],
@@ -136,7 +127,7 @@ class ClientController extends BaseController
                 'min_length' => '案主姓名至少需要 2 個字。',
                 'max_length' => '案主姓名不可超過 100 個字。',
             ],
-            'ct_address' => [
+            'ct_addr' => [
                 'required'   => '請輸入案主地址。',
                 'max_length' => '案主地址不可超過 255 個字。',
             ],
@@ -208,14 +199,14 @@ class ClientController extends BaseController
         //接收修改表單送來的資料，並移除文字前後的空白
         $data = [
             'ct_name' => trim((string) $this->request->getPost('ct_name')),
-            'ct_address' => trim((string) $this->request->getPost('ct_address')),
+            'ct_addr' => trim((string) $this->request->getPost('ct_addr')),
             'route_no' => trim((string) $this->request->getPost('route_no')),
         ];
 
         //驗證規則：三個欄位都必填，路線編號必須是整數
         $rules = [
             'ct_name' => 'required',
-            'ct_address' => 'required',
+            'ct_addr' => 'required',
             'route_no' => 'required|integer',
         ];
 
@@ -224,7 +215,7 @@ class ClientController extends BaseController
             'ct_name' => [
                 'required' => '請輸入案主姓名。',
             ],
-            'ct_address' => [
+            'ct_addr' => [
                 'required' => '請輸入案主地址。',
             ],
             'route_no' => [
@@ -262,7 +253,7 @@ class ClientController extends BaseController
         );
 
         $ctAddress = trim(
-            (string) $this->request->getPost('ct_address')
+            (string) $this->request->getPost('ct_addr')
         );
 
         $routeNo = trim(
@@ -295,7 +286,7 @@ class ClientController extends BaseController
         // 使用已經整理、驗證過的變數
         $data = [
             'ct_name'    => $ctName,
-            'ct_address' => $ctAddress,
+            'ct_addr' => $ctAddress,
             'route_no'   => (int) $routeNo,
         ];
 
@@ -329,8 +320,8 @@ class ClientController extends BaseController
         }
 
         //軟刪除指定的案主
-        //因為Model已啟用useSoftDeletes
-        //所以這邊只會寫入delete_at
+        //因為Model已啟用 useSoftDeletes
+        //所以這邊只會寫入 d_date
         $clientModel->delete($id);
 
         //刪除完成後返回案主列表
@@ -347,12 +338,12 @@ class ClientController extends BaseController
         //用來查詢clients資料表
         $clientModel = new ClientModel();
 
-        // 1.onlyDeleted() 只查詢已軟刪除的資料 也就是 deleted_at 有刪除時間的資料
+        // 1.onlyDeleted() 只查詢已軟刪除的資料 也就是 d_date 有刪除時間的資料
         // 2.orderBy() 依照刪除時間倒序排列最新刪除的資料會顯示在最上方
         // 3.findAll() 執行查詢並取得全部結果
         $deletedClients = $clientModel
             ->onlyDeleted()
-            ->orderBy('deleted_at', 'DESC')
+            ->orderBy('d_date', 'DESC')
             ->findAll();
 
         //將查詢結果放入$data
@@ -374,12 +365,13 @@ class ClientController extends BaseController
 
         //onlyDeleted()表示只搜尋已軟刪除的資料
         //避免把原本就正常的資料當成回收桶資料
-        $deletedClients = $clientModel
+        // 只查詢回收桶中編號符合 $id 的案主
+        $deletedClient = $clientModel
             ->onlyDeleted()
-            ->findAll($id);
+            ->find($id);
 
         //如果回收桶裡找不到這筆資料
-        if (null === $deletedClients) {
+        if (null === $deletedClient) {
             //回到資源回收桶並顯示錯誤訊息
             return redirect()
                 ->to('clients/trash')
@@ -422,7 +414,7 @@ class ClientController extends BaseController
         }
 
         //第二個參數true代表永久刪除
-        //這會真正移除資料列,不是更新deleted_at
+        //這會真正移除資料列,不是更新 d_date
         $deleted = $clientModel->delete($id, true);
 
         //如果資料庫刪除失敗
@@ -436,5 +428,77 @@ class ClientController extends BaseController
         return redirect()
             ->to('clients/trash')
             ->with('success', '案主資料已永久刪除');
+    }
+
+    // 回傳指定案主的最新照片，供姓名旁的預覽使用
+    public function photoPreview(int $id)
+    {
+        // 找出這位案主最新上傳的圖片附件
+        $attachmentModel = new ClientAttachmentModel();
+        $attachment = $attachmentModel
+            ->where('client_id', $id)
+            ->like('mime_type', 'image/', 'after')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        // 沒有圖片附件時回傳 404
+        if ($attachment === null) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 取得這位案主的私人檔案資料夾
+        $clientDirectory = realpath(
+            WRITEPATH . 'uploads/clients/' . $id
+        );
+
+        // 只使用附件記錄中的檔名，不接受資料夾路徑
+        $storedName = basename($attachment['stored_name']);
+
+        // 確認圖片檔案實際存在
+        $filePath = realpath(
+            WRITEPATH
+            . 'uploads/clients/'
+            . $id
+            . DIRECTORY_SEPARATOR
+            . $storedName
+        );
+
+        // 資料夾或檔案不存在時回傳 404
+        if ($clientDirectory === false || $filePath === false) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 確認檔案仍在這位案主的資料夾內，避免讀取其他路徑
+        $allowedPathPrefix = $clientDirectory . DIRECTORY_SEPARATOR;
+
+        if (! str_starts_with($filePath, $allowedPathPrefix)) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 再從實際檔案判斷 MIME 類型，不只相信資料庫內容
+        $actualMimeType = mime_content_type($filePath);
+
+        // 只允許瀏覽器預覽這些圖片格式
+        $allowedImageTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+        ];
+
+        // 檔案無法讀取或不是允許的圖片格式時回傳 404
+        if (
+            ! is_readable($filePath)
+            || ! in_array($actualMimeType, $allowedImageTypes, true)
+        ) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 設定圖片回應標頭，並傳回圖片內容
+        return $this->response
+            ->setContentType($actualMimeType)
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('Cache-Control', 'private, no-store')
+            ->setBody((string) file_get_contents($filePath));
     }
 }

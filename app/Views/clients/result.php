@@ -109,7 +109,7 @@
             <h1>接收到的案主資料</h1>
 
             <p>案主姓名：<?= esc($ct_name ?? '') ?></p>
-            <p>案主地址：<?= esc($ct_address ?? '') ?></p>
+            <p>案主地址：<?= esc($ct_addr ?? '') ?></p>
             <p>路線編號：<?= esc($route_no ?? '') ?></p>
 
             <a href="<?= base_url('clients/create') ?>">返回新增畫面</a>

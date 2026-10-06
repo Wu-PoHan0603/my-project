@@ -194,7 +194,7 @@
                                 <td><?= esc($client['ct_name']) ?></td>
 
                                 <!-- 案主地址 -->
-                                <td><?= esc($client['ct_address']) ?></td>
+                                <td><?= esc($client['ct_addr']) ?></td>
 
                                 <!-- 路線編號 -->
                                 <td><?= esc($client['route_no']) ?></td>

@@ -165,6 +165,7 @@
                                     <th>案主地址</th>
                                     <th>路線編號</th>
                                     <th>建立時間</th>
+                                    <th>修改時間</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -177,12 +178,12 @@
                                 // 先準備建立時間的顯示內容
                                 $createdAtTaipei = '';
 
-                                // 確認這一筆案主有 created_at
+                                // 確認這一筆案主有 b_date
                                 // 避免空值傳入 Time::parse()
-                                if (! empty($client['created_at'])) {
-                                    // 將資料庫的 created_at 解讀為 UTC 時間
+                                if (! empty($client['b_date'])) {
+                                    // 將資料庫的 b_date 解讀為 UTC 時間
                                     $createdAtUtc = \CodeIgniter\I18n\Time::parse(
-                                        $client['created_at'],
+                                        $client['b_date'],
                                         'UTC'
                                     );
 
@@ -199,6 +200,24 @@
                                 }
                                 ?>
 
+                                <?php 
+                                
+                                //修改時間預設顯示空白
+                                $updatedAtTaipei = '';
+
+                                // e_date 存的是 UTC;顯示時轉換為台灣時間
+                                if (! empty($client['e_date'])) {
+                                    $updatedAtUtc = \CodeIgniter\I18n\Time::parse(
+                                        $client['e_date'],
+                                        'UTC'
+                                    );
+
+                                    $updatedAtTaipei = $updatedAtUtc
+                                        ->setTimezone('Asia/Taipei')
+                                        ->format('Y-m-s H:i:s');
+                                }
+                                ?>
+
                                 <!-- 每一筆案主建立一個表格資料列 -->
                                 <tr>
                                     <!-- 第一欄：案主編號 -->
@@ -208,12 +227,28 @@
 
                                     <!-- 第二欄：案主姓名 -->
                                     <td>
-                                        <?= esc($client['ct_name']) ?>
+                                        <button
+                                            type="button"
+                                            class="client-name-photo-trigger js-photo-preview"
+                                            data-photo-url="<?= esc(
+                                                base_url('clients/' . $client['id'] . '/photo-preview'),
+                                                'attr'
+                                            ) ?>"
+                                        >
+                                            <?= esc($client['ct_name']) ?>
+
+                                            <!-- 照片由 JavaScript 在滑過姓名時載入 -->
+                                            <span class="client-photo-popover">
+                                                <img alt="<?= esc($client['ct_name'], 'attr') ?>的照片" class="client-photo-image" hidden
+                                            >
+                                                <span class="client-photo-message">滑過姓名載入照片</span>
+                                            </span>
+                                        </button>
                                     </td>
 
                                     <!-- 第三欄：案主地址 -->
                                     <td>
-                                        <?= esc($client['ct_address']) ?>
+                                        <?= esc($client['ct_addr']) ?>
                                     </td>
 
                                     <!-- 第四欄：路線編號 -->
@@ -226,10 +261,26 @@
                                         <?= esc($createdAtTaipei) ?>
                                     </td>
 
-                                    <!-- 第六欄：操作按鈕 -->
+                                    <!-- 第六欄：轉換完成的台灣更新時間 -->
+                                    <td>
+                                        <?= esc($updatedAtTaipei) ?>
+                                    </td>
+
+                                    <!-- 第七欄：操作按鈕 -->
                                     <td>
                                         <!-- action-buttons是按鈕排列容器 CSS會讓容器裡的按鈕水平並排 -->
                                         <div class="action-buttons">
+                                            
+
+                                            <!-- 只有按這個按鈕才會開啟詳細資料視窗 -->
+                                            
+                                            <!-- 開啟這位案主的詳細資料網址 -->
+                                            <a
+                                                class="btn btn-primary"
+                                                href="<?= base_url('clients/' . $client['id'] . '/details') ?>"
+                                            >
+                                                詳細資料
+                                            </a>
                                             
                                             <!--
                                                 將案主 id 放進修改網址
@@ -272,6 +323,9 @@
             </section>
         </main>
     </div>
+
+<!-- 加上版本參數，讓瀏覽器載入最新的 JavaScript -->
+<script src="<?= base_url('js/client-detail.js?v=3') ?>"></script>
 </body>
     
 </html>

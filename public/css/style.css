@@ -1062,3 +1062,169 @@ body {
 .sidebar-logout-button:hover {
     background: rgba(255, 255, 255, 0.16);
 }
+
+/* 姓名按鈕維持文字外觀，並作為照片預覽的定位參考 */
+.client-name-photo-trigger {
+    position: relative;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #1769aa;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* 滑過時加深姓名顏色 */
+.client-name-photo-trigger:hover,
+.client-name-photo-trigger:focus-visible {
+    color: #0d4777;
+}
+
+/* 照片預覽框預設隱藏 */
+.client-photo-popover {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 8px);
+    left: 0;
+    display: grid;
+    width: 250px;
+    min-height: 150px;
+    align-content: center;
+    justify-items: center;
+    padding: 10px;
+    border: 1px solid #d8dee4;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+}
+
+/* 滑過或用鍵盤選取姓名時顯示照片預覽 */
+.client-name-photo-trigger:hover .client-photo-popover,
+.client-name-photo-trigger:focus-visible .client-photo-popover {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 照片預覽尺寸 */
+.client-photo-image {
+    display: block;
+    width: 230px;
+    height: 150px;
+    border-radius: 6px;
+    background: #f1f4f6;
+    object-fit: contain;
+}
+
+/* hidden 屬性會讓未載入的圖片保持隱藏 */
+.client-photo-image[hidden],
+.client-photo-message[hidden] {
+    display: none;
+}
+
+/* 沒有照片或正在載入時的提示文字 */
+.client-photo-message {
+    padding: 16px;
+    color: #64727b;
+    font-size: 0.9rem;
+}
+
+/* 操作欄按鈕水平排列，並避免表單自身產生外距 */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-buttons form {
+    margin: 0;
+}
+
+/* 設定獨立詳細資料頁面的版面 */
+.client-detail-page {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #d9e0e7;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(31, 45, 61, 0.08);
+}
+
+/* 讓標題和內容保持間距 */
+.client-detail-page h1 {
+    margin: 24px 0;
+}
+
+/* 將資料分頁按鈕排列在同一列 */
+.client-detail-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #d9e0e7;
+}
+
+/* 設定分頁按鈕外觀 */
+.client-detail-tabs button {
+    padding: 10px 16px;
+    color: #334155;
+    background: #f1f5f9;
+    border: 1px solid #d9e0e7;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* 標示目前選取的分頁 */
+.client-detail-tabs button[aria-selected="true"] {
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* 將案主欄位排成多欄 */
+.client-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+/* 設定每個欄位的卡片外觀 */
+.client-detail-item {
+    padding: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+/* 顯示欄位名稱 */
+.client-detail-item dt {
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* 顯示欄位內容 */
+.client-detail-item dd {
+    margin: 0;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+/* 小螢幕改成單欄排列 */
+@media (max-width: 700px) {
+    .client-detail-page {
+        margin: 16px;
+        padding: 18px;
+    }
+
+    .client-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
