@@ -95,6 +95,163 @@ class ClientController extends BaseController
         ]);
     }
 
+    //接收案主詳細資料表單，驗證後更新資料庫
+    public function updateDetails(int $id)
+    {
+        //建立操作兩張資料表的Model
+        $clientModel = new ClientModel();
+        $profileModel = new ClientProfileModel();
+
+        //先確認案主存在；找不到時顯示404
+        if (null === $clientModel->find($id)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('找不到案主資料');
+        }
+
+        //clients 資料表的欄位
+        $clientData = [
+            'ct_name' => trim((string) $this->request->getPost('ct_name')),
+            'ct_addr' => trim((string) $this->request->getPost('ct_addr')),
+        ];
+
+        //client_profiles 資料表中允許由表單修改的欄位
+        $profileFields = [
+            'region',
+            'national_id',
+            'sex',
+            'birthday',
+            'mobile',
+            'home_phone',
+            'contact_person_1',
+            'contact_person_2',
+            'case_manager',
+            'care_specialist',
+            'home_service',
+            'registered_address',
+            'longitude',
+            'latitude',
+            'checkin_distance',
+            'meal_box_price',
+            'remittance_suffix',
+            'only_ot_case',
+            'living_status',
+            'identity_type',
+            'disability_status',
+            'health_status',
+            'disability_level',
+            'disease_names',
+            'care_level',
+            'assessment_summary',
+            'treatment_plan_summary',
+            'is_active',
+        ];
+
+        // 讀取表單資料；空白欄位轉成 null，方便寫入可為空的資料庫欄位
+        $profileData = [];
+
+        foreach ($profileFields as $field) {
+            $value = $this->request->getPost($field);
+
+            if ($value === null || trim((string) $value) === '') {
+                $profileData[$field] = null;
+            } else {
+                // 保留字串格式，例如匯款尾碼前面的 0
+                $profileData[$field] = trim((string) $value);
+            }
+        }
+
+        // 合併兩張資料表的表單欄位，交給 CI4 驗證
+        $formData = array_merge($clientData, $profileData);
+
+        // 伺服器端驗證規則；即使有人略過瀏覽器表單限制也會檢查
+        $rules = [
+            'ct_name' => 'required|min_length[2]|max_length[100]',
+            'ct_addr' => 'required|max_length[255]',
+
+            'region' => 'permit_empty|max_length[100]',
+            'national_id' => 'permit_empty|max_length[20]',
+            'sex' => 'permit_empty|max_length[20]',
+            'birthday' => 'permit_empty|valid_date[Y-m-d]',
+            'mobile' => 'permit_empty|max_length[30]',
+            'home_phone' => 'permit_empty|max_length[30]',
+            'contact_person_1' => 'permit_empty|max_length[255]',
+            'contact_person_2' => 'permit_empty|max_length[255]',
+            'case_manager' => 'permit_empty|max_length[100]',
+            'care_specialist' => 'permit_empty|max_length[100]',
+            'home_service' => 'permit_empty|max_length[100]',
+            'registered_address' => 'permit_empty|max_length[255]',
+            'longitude' => 'permit_empty|decimal',
+            'latitude' => 'permit_empty|decimal',
+            'checkin_distance' => 'permit_empty|decimal',
+            'meal_box_price' => 'permit_empty|decimal',
+            'remittance_suffix' => 'permit_empty|max_length[20]',
+            'only_ot_case' => 'required|in_list[0,1]',
+            'living_status' => 'permit_empty|max_length[100]',
+            'identity_type' => 'permit_empty|max_length[255]',
+            'disability_status' => 'permit_empty|max_length[100]',
+            'health_status' => 'permit_empty',
+            'disability_level' => 'permit_empty|max_length[100]',
+            'disease_names' => 'permit_empty',
+            'care_level' => 'permit_empty|max_length[100]',
+            'assessment_summary' => 'permit_empty',
+            'treatment_plan_summary' => 'permit_empty',
+            'is_active' => 'required|in_list[0,1]',
+        ];
+
+        // 驗證失敗時返回詳細資料頁，保留輸入內容和錯誤訊息
+        if (! $this->validateData($formData, $rules)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('errors', $this->validator->getErrors());
+        }
+
+        // 只取出通過驗證的 clients 欄位
+        $validatedData = $this->validator->getValidated();
+
+        $validatedClientData = array_intersect_key(
+            $validatedData,
+            array_flip(['ct_name', 'ct_addr'])
+        );
+
+        // 只取出通過驗證的 client_profiles 欄位
+        $validatedProfileData = array_intersect_key(
+            $validatedData,
+            array_flip($profileFields)
+        );
+
+        // 兩張資料表一起更新；任一筆資料失敗時，避免只存成功一半
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $clientModel->update($id, $validatedClientData);
+
+        // 這位案主第一次填詳細資料時新增資料列，之後則更新既有資料列
+        if ($profileModel->find($id) === null) {
+            $profileModel->insert(
+                array_merge(
+                    ['client_id' => $id],
+                    $validatedProfileData
+                )
+            );
+        } else {
+            $profileModel->update($id, $validatedProfileData);
+        }
+
+        $db->transComplete();
+
+        // 資料庫儲存失敗時返回頁面並顯示錯誤
+        if ($db->transStatus() === false) {
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '案主詳細資料更新失敗，請確認資料庫欄位設定');
+        }
+
+        // 儲存成功後重新載入詳細資料頁
+        return redirect()
+            ->to('clients/' . $id . '/details')
+            ->with('success', '案主詳細資料更新成功');
+    }
+
     public function store()
     {
         $data = [

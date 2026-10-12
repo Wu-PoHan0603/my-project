@@ -7,38 +7,46 @@ $client = is_array($client ?? null) ? $client : [];
 $profile = is_array($profile ?? null) ? $profile : [];
 $attachments = is_array($attachments ?? null) ? $attachments : [];
 
-// 整理案主資料與個人資料表的欄位
-$fields = [
-    ['區域', 'region', $profile['region'] ?? null],
-    ['案主姓名', 'ct_name', $client['ct_name'] ?? null],
-    ['案主身分證', 'national_id', $profile['national_id'] ?? null],
-    ['案主性別', 'sex', $profile['sex'] ?? null],
-    ['案主生日', 'birthday', $profile['birthday'] ?? null],
-    ['案主手機', 'mobile', $profile['mobile'] ?? null],
-    ['案主家電', 'home_phone', $profile['home_phone'] ?? null],
-    ['案主聯絡人-1', 'contact_person_1', $profile['contact_person_1'] ?? null],
-    ['案主聯絡人-2', 'contact_person_2', $profile['contact_person_2'] ?? null],
-    ['個管', 'case_manager', $profile['case_manager'] ?? null],
-    ['照專', 'care_specialist', $profile['care_specialist'] ?? null],
-    ['居服', 'home_service', $profile['home_service'] ?? null],
-    ['案主戶籍地址', 'registered_address', $profile['registered_address'] ?? null],
-    ['案主聯絡地址', 'ct_address', $client['ct_address'] ?? null],
-    ['案主家經度', 'longitude', $profile['longitude'] ?? null],
-    ['案主家緯度', 'latitude', $profile['latitude'] ?? null],
-    ['打卡距離', 'checkin_distance', $profile['checkin_distance'] ?? null],
-    ['餐盒單價', 'meal_box_price', $profile['meal_box_price'] ?? null],
-    ['匯款尾碼', 'remittance_suffix', $profile['remittance_suffix'] ?? null],
-    ['是否為僅 OT 個案', 'only_ot_case', $profile['only_ot_case'] ?? null],
-    ['居住狀況', 'living_status', $profile['living_status'] ?? null],
-    ['身分別', 'identity_type', $profile['identity_type'] ?? null],
-    ['身心障礙', 'disability_status', $profile['disability_status'] ?? null],
-    ['健康狀況', 'health_status', $profile['health_status'] ?? null],
-    ['失能程度', 'disability_level', $profile['disability_level'] ?? null],
-    ['疾病名稱', 'disease_names', $profile['disease_names'] ?? null],
-    ['關懷分級', 'care_level', $profile['care_level'] ?? null],
-    ['個案評估摘要', 'assessment_summary', $profile['assessment_summary'] ?? null],
-    ['處遇計畫摘要', 'treatment_plan_summary', $profile['treatment_plan_summary'] ?? null],
-    ['是否啟用', 'is_active', $profile['is_active'] ?? null],
+// 設定案主詳細資料表的欄位名稱、標籤和輸入方式
+$profileFields = [
+    ['name' => 'region', 'label' => '區域', 'type' => 'text'],
+    ['name' => 'national_id', 'label' => '案主身分證', 'type' => 'text'],
+    ['name' => 'sex', 'label' => '案主性別', 'type' => 'text'],
+    ['name' => 'birthday', 'label' => '案主生日', 'type' => 'date'],
+    ['name' => 'mobile', 'label' => '案主手機', 'type' => 'tel'],
+    ['name' => 'home_phone', 'label' => '案主家電', 'type' => 'tel'],
+    ['name' => 'contact_person_1', 'label' => '案主聯絡人-1', 'type' => 'text'],
+    ['name' => 'contact_person_2', 'label' => '案主聯絡人-2', 'type' => 'text'],
+    ['name' => 'case_manager', 'label' => '個管', 'type' => 'text'],
+    ['name' => 'care_specialist', 'label' => '照專', 'type' => 'text'],
+    ['name' => 'home_service', 'label' => '居服', 'type' => 'text'],
+    ['name' => 'registered_address', 'label' => '案主戶籍地址', 'type' => 'text', 'wide' => true],
+    ['name' => 'longitude', 'label' => '案主家經度', 'type' => 'number'],
+    ['name' => 'latitude', 'label' => '案主家緯度', 'type' => 'number'],
+    ['name' => 'checkin_distance', 'label' => '打卡距離', 'type' => 'number'],
+    ['name' => 'meal_box_price', 'label' => '餐盒單價', 'type' => 'number'],
+    ['name' => 'remittance_suffix', 'label' => '匯款尾碼', 'type' => 'text'],
+    [
+        'name' => 'only_ot_case',
+        'label' => '是否為僅 OT 個案',
+        'type' => 'select',
+        'options' => ['0' => '否', '1' => '是'],
+    ],
+    ['name' => 'living_status', 'label' => '居住狀況', 'type' => 'text'],
+    ['name' => 'identity_type', 'label' => '身分別', 'type' => 'text'],
+    ['name' => 'disability_status', 'label' => '身心障礙', 'type' => 'text'],
+    ['name' => 'health_status', 'label' => '健康狀況', 'type' => 'textarea', 'wide' => true],
+    ['name' => 'disability_level', 'label' => '失能程度', 'type' => 'text'],
+    ['name' => 'disease_names', 'label' => '疾病名稱', 'type' => 'textarea', 'wide' => true],
+    ['name' => 'care_level', 'label' => '關懷分級', 'type' => 'text'],
+    ['name' => 'assessment_summary', 'label' => '個案評估摘要', 'type' => 'textarea', 'wide' => true],
+    ['name' => 'treatment_plan_summary', 'label' => '處遇計畫摘要', 'type' => 'textarea', 'wide' => true],
+    [
+        'name' => 'is_active',
+        'label' => '是否啟用',
+        'type' => 'select',
+        'options' => ['1' => '啟用', '0' => '停用'],
+    ],
 ];
 ?>
 
@@ -99,29 +107,152 @@ $fields = [
         <section id="detail-basic" class="client-detail-panel" role="tabpanel">
             <h2>案主資料</h2>
 
-            <dl class="client-detail-grid">
-                <?php foreach ($fields as [$label, $key, $value]): ?>
-                    <?php
-                    // 空值顯示尚未填寫
-                    if ($value === null || $value === '') {
-                        $value = '尚未填寫';
-                    }
+            <?php $successMessage = session()->getFlashdata('success'); ?>
+            <?php if ($successMessage): ?>
+                <!-- 顯示儲存成功訊息 -->
+                <p class="detail-alert detail-alert-success">
+                    <?= esc($successMessage) ?>
+                </p>
+            <?php endif; ?>
 
-                    // 將資料庫中的 1、0 顯示成是、否
-                    if (
-                        in_array($key, ['only_ot_case', 'is_active'], true)
-                        && $value !== '尚未填寫'
-                    ) {
-                        $value = (string) $value === '1' ? '是' : '否';
-                    }
-                    ?>
+            <?php $errorMessage = session()->getFlashdata('error'); ?>
+            <?php if ($errorMessage): ?>
+                <!-- 顯示資料庫儲存失敗訊息 -->
+                <p class="detail-alert detail-alert-error">
+                    <?= esc($errorMessage) ?>
+                </p>
+            <?php endif; ?>
 
-                    <div class="client-detail-item">
-                        <dt><?= esc($label) ?></dt>
-                        <dd><?= esc((string) $value) ?></dd>
+            <?php $errors = session()->getFlashdata('errors') ?? []; ?>
+            <?php if (! empty($errors)): ?>
+                <!-- 列出欄位驗證錯誤 -->
+                <div class="detail-alert detail-alert-error">
+                    <p>請檢查以下欄位：</p>
+                    <ul>
+                        <?php foreach ($errors as $message): ?>
+                            <li><?= esc($message) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <!-- 表單以 POST 送到剛加入的案主詳細資料儲存路由 -->
+            <form
+                action="<?= base_url('clients/' . $client['id'] . '/details') ?>"
+                method="post"
+                class="client-detail-form"
+            >
+                <!-- CSRF Token 用來驗證表單是從本站送出 -->
+                <?= csrf_field() ?>
+
+                <div class="client-detail-form-grid">
+
+                    <!-- 案主姓名儲存在 clients 資料表 -->
+                    <div class="client-detail-form-field">
+                        <label for="ct_name">案主姓名</label>
+                        <input
+                            type="text"
+                            id="ct_name"
+                            name="ct_name"
+                            value="<?= esc(old('ct_name', $client['ct_name'] ?? ''), 'attr') ?>"
+                            required
+                            maxlength="100"
+                        >
                     </div>
-                <?php endforeach; ?>
-            </dl>
+
+                    <!-- 聯絡地址在資料庫的欄位名稱是 ct_addr -->
+                    <div class="client-detail-form-field is-wide">
+                        <label for="ct_addr">案主聯絡地址</label>
+                        <input
+                            type="text"
+                            id="ct_addr"
+                            name="ct_addr"
+                            value="<?= esc(old('ct_addr', $client['ct_addr'] ?? ''), 'attr') ?>"
+                            required
+                            maxlength="255"
+                        >
+                    </div>
+
+                    <?php foreach ($profileFields as $field): ?>
+                        <?php
+                        // 取得欄位名稱，用它讀取個人資料表中的原始值
+                        $fieldName = $field['name'];
+
+                        // 新案主尚無詳細資料時，布林欄位使用資料表預設值
+                        $defaultValue = '';
+
+                        if ($fieldName === 'only_ot_case') {
+                            $defaultValue = '0';
+                        } elseif ($fieldName === 'is_active') {
+                            $defaultValue = '1';
+                        }
+
+                        // 驗證失敗回到本頁時，優先顯示剛才輸入的內容
+                        $fieldValue = old(
+                            $fieldName,
+                            $profile[$fieldName] ?? $defaultValue
+                        );
+
+                        // 長文字欄位使用較寬的版面
+                        $wideClass = ! empty($field['wide']) ? 'is-wide' : '';
+                        ?>
+
+                        <div class="client-detail-form-field <?= esc($wideClass, 'attr') ?>">
+                            <label for="profile-<?= esc($fieldName, 'attr') ?>">
+                                <?= esc($field['label']) ?>
+                            </label>
+
+                            <?php if ($field['type'] === 'textarea'): ?>
+                                <!-- textarea 用來輸入多行文字 -->
+                                <textarea
+                                    id="profile-<?= esc($fieldName, 'attr') ?>"
+                                    name="<?= esc($fieldName, 'attr') ?>"
+                                    rows="4"
+                                ><?= esc((string) $fieldValue) ?></textarea>
+
+                            <?php elseif ($field['type'] === 'select'): ?>
+                                <!-- 下拉選單用來選擇是/否或啟用狀態 -->
+                                <select
+                                    id="profile-<?= esc($fieldName, 'attr') ?>"
+                                    name="<?= esc($fieldName, 'attr') ?>"
+                                    required
+                                >
+                                    <?php foreach ($field['options'] as $optionValue => $optionLabel): ?>
+                                        <option
+                                            value="<?= esc($optionValue, 'attr') ?>"
+                                            <?= (string) $fieldValue === (string) $optionValue ? 'selected' : '' ?>
+                                        >
+                                            <?= esc($optionLabel) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+
+                            <?php else: ?>
+                                <!-- 一般欄位依設定使用文字、日期、電話或數字輸入框 -->
+                                <input
+                                    type="<?= esc($field['type'], 'attr') ?>"
+                                    id="profile-<?= esc($fieldName, 'attr') ?>"
+                                    name="<?= esc($fieldName, 'attr') ?>"
+                                    value="<?= esc((string) $fieldValue, 'attr') ?>"
+                                    <?= $field['type'] === 'number' ? 'step="any"' : '' ?>
+                                >
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+
+                </div>
+
+                <!-- 按下按鈕後送出表單，Controller 會驗證並儲存 -->
+                <div class="client-detail-form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        儲存案主資料
+                    </button>
+
+                    <a href="<?= base_url('clients') ?>" class="btn btn-secondary">
+                        返回案主列表
+                    </a>
+                </div>
+            </form>
 
             <!-- 顯示附件資料 -->
             <h2>照片與文件</h2>

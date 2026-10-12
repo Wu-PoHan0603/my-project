@@ -87,3 +87,12 @@ $routes->post(
     'AuthController::updatePassword',
     ['filter' => 'auth']
 );
+
+// 接收案主詳細資料表單送出的 POST 請求
+// (:num) 是案主編號，$1 會把編號傳給 updateDetails()
+// auth Filter 確保只有登入使用者能修改案主資料
+$routes->post(
+    'clients/(:num)/details',
+    'ClientController::updateDetails/$1',
+    ['filter' => 'auth']
+);
