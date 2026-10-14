@@ -22,11 +22,21 @@
             <nav>
                 <!-- 尚未建立首頁Route,所以暫時使用 # -->
                 <a href="#">首頁</a>
-                <!-- 前往案主資料列表 -->
-                <a href="<?= base_url('clients') ?>">案主資料</a>
-                <!-- 前往新增案主列表 -->
-                <a href="<?= base_url('clients/create') ?>">新增案主</a>
-                <!-- 尚未建立資源回收桶Route,所以暫時使用 # -->
+
+                <!-- 點擊「案主管理」可展開或收合子選單 -->
+                <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
+                <!-- details 與 summary 標籤是用來製作原生摺疊面板 -->
+                <!-- 容器元素 -->
+                <details class="sidebar-menu-group" open>
+                    <!-- 標題元素 -->
+                    <summary>案主管理</summary>
+
+                    <div class="sidebar-submenu">
+                        <!-- 案主資料連結 -->
+                        <a href="<?= base_url('clients') ?>">案主資料</a>
+                    </div>
+                </details>
+                
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
             <?php

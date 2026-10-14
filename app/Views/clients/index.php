@@ -1,3 +1,14 @@
+<?php
+/**
+ * 以下變數由 ClientController::index() 傳入。
+ *
+ * @var int $pageSize
+ * @var int[] $pageSizeOptions
+ * @var int $currentPage
+ * @var int $pageCount
+ * @var string $keyword
+ */
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -14,8 +25,21 @@
             
             <nav>
                 <a href="#">首頁</a>
-                <a href="<?= base_url('clients') ?>">案主資料</a>
-                <a href="<?= base_url('clients/create') ?>">新增案主</a>
+
+                <!-- 點擊「案主管理」可展開或收合子選單 -->
+                <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
+                <!-- details 與 summary 標籤是用來製作原生摺疊面板 -->
+                <!-- 容器元素 -->
+                <details class="sidebar-menu-group" open>
+                    <!-- 標題元素 -->
+                    <summary>案主管理</summary>
+
+                    <div class="sidebar-submenu">
+                        <!-- 案主資料連結 -->
+                        <a href="<?= base_url('clients') ?>">案主資料</a>
+                    </div>
+                </details>
+
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
             <?php
@@ -149,6 +173,12 @@
 
                     <h2>案主資料列表</h2>
 
+                    <div class="client-table-toolbar">
+                        <!-- 前往新增案主頁；沿用目前 CSS 的紅色按鈕樣式 -->
+                        <a href="<?= base_url('clients/create') ?>" class="btn btn-danger">新增案主</a>
+                    </div>
+                    
+
                     <?php if (!empty($clients)): ?>
                         <!--
                         $clients 有資料時顯示表格
@@ -214,7 +244,7 @@
 
                                     $updatedAtTaipei = $updatedAtUtc
                                         ->setTimezone('Asia/Taipei')
-                                        ->format('Y-m-s H:i:s');
+                                        ->format('Y-m-d H:i:s');
                                 }
                                 ?>
 
@@ -314,8 +344,67 @@
                             <?php endforeach; ?>
                         </tbody>
                         </table>
-                        <!-- 顯示 clients 這組分頁連結 -->
-                        <?= isset($pager) ? $pager->links('clients') : '' ?>
+                        <!-- 每頁筆數選單與跳頁輸入框 -->
+                        <div class="client-pagination-toolbar">
+                            <form
+                                action="<?= base_url('clients') ?>"
+                                method="get"
+                                class="client-pagination-form"
+                                id="client-pagination-form"
+                            >
+                                <!-- 保留目前的搜尋關鍵字 -->
+                                <input
+                                    type="hidden"
+                                    name="keyword"
+                                    value="<?= esc($keyword ?? '', 'attr') ?>"
+                                >
+
+                                <label for="client-page-size">每頁顯示</label>
+
+                                <!-- 選擇每頁顯示 10、20 或 50 筆 -->
+                                <select id="client-page-size" name="perPage">
+                                    <?php foreach ($pageSizeOptions as $option): ?>
+                                        <option
+                                            value="<?= esc((string) $option) ?>"
+                                            <?= $pageSize === $option ? 'selected' : '' ?>
+                                        >
+                                            <?= esc((string) $option) ?> 筆
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+
+                                <label for="page_clients">跳到第</label>
+
+                                <!-- page_clients 對應 paginate($pageSize, 'clients', 頁碼) -->
+                                <input
+                                    type="number"
+                                    id="page_clients"
+                                    name="page_clients"
+                                    min="1"
+                                    max="<?= esc((string) $pageCount) ?>"
+                                    value="<?= esc((string) $currentPage) ?>"
+                                    required
+                                >
+
+                                <span>頁，共 <?= esc((string) $pageCount) ?> 頁</span>
+
+                                <button type="submit" class="client-page-submit">跳轉</button>
+                            </form>
+                        </div>
+
+                        <!-- 套用自訂模板，只顯示數字頁碼 -->
+                        <?= isset($pager) ? $pager->links('clients', 'client_numbers') : '' ?>
+
+                        <script>
+                            // 更改每頁筆數時，回到第 1 頁再重新載入
+                            document
+                                .getElementById('client-page-size')
+                                .addEventListener('change', function () {
+                                    const pageInput = this.form.querySelector('[name="page_clients"]');
+                                    pageInput.value = '1';
+                                    this.form.requestSubmit();
+                                });
+                        </script>
                     <?php else: ?>
                         <!-- $clients 沒有資料時顯示提示文字 -->
                         <p>目前沒有案主資料</p>

@@ -38,17 +38,37 @@ class ClientController extends BaseController
             $clientModel->like('ct_name', $keyword);
         }
 
-        // 取代原本的findAll()，改成每頁顯示5筆
-        $pageSize = 5;
+        // 每頁筆數只允許 10、20 或 50，預設為 10
+        $pageSizeOptions = [10, 20, 50];
+        $pageSize = (int) ($this->request->getGet('perPage') ?? 10);
+
+        if (! in_array($pageSize, $pageSizeOptions, true)) {
+            $pageSize = 10;
+        }
+
+        // clients 是分頁群組名稱，所以頁碼參數使用 page_clients
+        $currentPage = max(
+            1,
+            (int) ($this->request->getGet('page_clients') ?? 1)
+        );
+
+        // 按照筆數與目前頁碼取得案主資料
         $clients = $clientModel
             ->orderBy('id', 'DESC')
-            // 第二個參數代表分頁群組名稱；第三個參數把搜尋字詞放進分頁網址
-            ->paginate($pageSize, 'clients');
+            ->paginate($pageSize, 'clients', $currentPage);
 
-        return view('clients/index',[
+        return view('clients/index', [
             'clients' => $clients,
             'keyword' => $keyword,
             'pager' => $clientModel->pager,
+
+            // 傳給 index.php 的每頁筆數設定
+            'pageSize' => $pageSize,
+            'pageSizeOptions' => $pageSizeOptions,
+
+            // 傳給 index.php 的目前頁碼與總頁數
+            'currentPage' => $clientModel->pager->getCurrentPage('clients'),
+            'pageCount' => $clientModel->pager->getPageCount('clients'),
         ]);
     }
 

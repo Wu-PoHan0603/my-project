@@ -16,6 +16,60 @@ body {
     min-height: 100vh;
 }
 
+/* 案主管理收合選單 */
+.sidebar-menu-group > summary {
+    padding: 10px 12px;
+    border-radius: 4px;
+    color: #ffffff;
+    cursor: pointer;
+    list-style: none;
+}
+
+/* 隱藏瀏覽器預設的小箭頭 */
+.sidebar-menu-group > summary::-webkit-details-marker {
+    display: none;
+}
+
+/* 收合時顯示加號 */
+.sidebar-menu-group > summary::after {
+    content: "+";
+    float: right;
+}
+
+/* 展開時顯示減號 */
+.sidebar-menu-group[open] > summary::after {
+    content: "−";
+}
+
+/* 滑鼠移到「案主管理」時顯示底色 */
+.sidebar-menu-group > summary:hover {
+    background-color: #34474f;
+}
+
+/* 子選單向右縮排，並加上左側分隔線 */
+.sidebar-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 4px 0 0 14px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+/* 標題與左上角按鈕水平排列 */
+.client-page-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* 避免標題原本的下方外距影響對齊 */
+.client-page-heading h1 {
+    margin: 0;
+}
+
 /* 左側選單 */
 .sidebar {
     /* 固定 Sidebar 寬度 */
@@ -112,6 +166,10 @@ body {
 .client-table-section {
     /* 表格區域與搜尋欄之間保留距離 */
     margin-top: 30px;
+
+    /* 表格區塊填滿主內容，不限制最大寬度 */
+    width: 100%;
+    max-width: none;
 }
 
 /* 案主資料表格 */
@@ -119,8 +177,8 @@ body {
     /* 表格寬度依內容或容器調整 */
     width: 100%;
 
-    /* 最大寬度，避免資料少時表格拉得過寬 */
-    max-width: 900px;
+    /* 最大寬度，讓表格填滿主內容區 */
+    max-width: none;
 
     /* 合併相鄰的框線 */
     border-collapse: collapse;
@@ -1315,4 +1373,115 @@ body {
     .client-detail-form-field.is-wide {
         grid-column: auto;
     }
+}
+
+/* 分頁設定區：每頁筆數和跳頁輸入框排列在同一列 */
+.client-pagination-toolbar {
+    margin: 18px 0 10px;
+}
+
+/* 控制項水平排列，畫面較窄時可自動換行 */
+.client-pagination-form {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* 將這一列的控制項推到右側 */
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 數字頁碼靠右排列 */
+.client-page-list {
+    display: flex;
+    justify-content: flex-end; /* 將頁碼按鈕推到右側 */
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+/* 統一選單、輸入框和按鈕的外觀 */
+.client-pagination-form select,
+.client-pagination-form input[type="number"],
+.client-page-submit {
+    min-height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 15px;
+}
+
+/* 控制頁碼輸入框寬度 */
+.client-pagination-form input[type="number"] {
+    width: 78px;
+}
+
+/* 跳轉按鈕 */
+.client-page-submit {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+    cursor: pointer;
+}
+
+/* 滑鼠移到跳轉按鈕時加深顏色 */
+.client-page-submit:hover {
+    background: #1d4ed8;
+}
+
+/* 數字頁碼排列 */
+.client-page-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+/* 每一個頁碼按鈕 */
+.client-page-list a {
+    display: inline-flex;
+    min-width: 38px;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    color: #2563eb;
+    background: #fff;
+    text-decoration: none;
+}
+
+/* 目前所在頁 */
+.client-page-list li.active a {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* 鍵盤操作時顯示焦點 */
+.client-page-list a:focus,
+.client-pagination-form select:focus,
+.client-pagination-form input:focus {
+    outline: 3px solid #bfdbfe;
+    outline-offset: 2px;
+}
+
+/* 列表標題靠左，新增按鈕靠右，整列位於表格上方 */
+.client-table-toolbar {
+    display: flex;
+    align-items: center;
+    
+    /* 將第一個項目推到左邊，最後一個項目推到右邊 */
+    justify-content: flex-end;
+
+    width: 100%;
+    margin: 12px 0 8px;
+}
+
+/* 移除標題預設外距，避免影響垂直對齊 */
+.client-table-toolbar h2 {
+    margin: 0;
 }
