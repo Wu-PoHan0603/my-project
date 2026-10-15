@@ -131,6 +131,26 @@
         <!-- 網頁右側的主要內容 -->
         <main class="content">
 
+            <!-- 麵包屑導覽：顯示從首頁到目前頁面的路徑 -->
+            <nav class="page-breadcrumb" aria-label="麵包屑導覽">
+
+                <!-- 點擊「首頁」回到網站首頁 -->
+                <span>首頁</span>
+
+                <!-- 大於符號是路徑分隔符，不是連結 -->
+                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+
+                <!-- 點擊「個案管理」回到案主列表 -->
+                <span>案主管理</span>
+
+                <!-- 分隔目前所在頁與上一層路徑 -->
+                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+
+                <!-- aira-current 表示這是目前所在頁面 -->
+                <span aria-current="page">案主資料</span>
+
+            </nav>
+
             <!-- 頁面標題 -->
             <h1>案主資料管理</h1>
 

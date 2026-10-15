@@ -1485,3 +1485,36 @@ body {
 .client-table-toolbar h2 {
     margin: 0;
 }
+
+/* 麵包屑整列的外觀 */
+.page-breadcrumb {
+    display: flex; /* 將路徑項目水平排列 */
+    align-items: center; /* 讓文字和分隔符垂直置中 */
+    flex-wrap: wrap; /* 空間不足時允許換行 */
+    gap: 8px; /* 路徑項目之間留出間距 */
+    margin: 0 0 12px; /* 與下方標題保留 12px 距離 */
+    color: #6b7280; /* 設定一般路徑文字顏色 */
+    font-size: 14px; /* 設定路徑文字大小 */
+}
+
+/* 可點擊的路徑連結 */
+.page-breadcrumb a {
+    color: #2563eb; /* 使用藍色提示這段文字可以點擊 */
+    text-decoration: none; /* 平時不顯示底線 */
+}
+
+/* 滑鼠移到連結上時顯示底線 */
+.page-breadcrumb a:hover {
+    text-decoration: underline; /* 提示使用者目前指向可點擊連結 */
+}
+
+/* 目前所在頁面的文字 */
+.page-breadcrumb [aria-current="page"] {
+    color: #374151; /* 讓目前頁面的文字顏色較深 */
+    font-weight: 600; /* 加粗目前頁面，方便辨認 */
+}
+
+/* 大於符號分隔線 */
+.page-breadcrumb-separator {
+    color: #9ca3af; /* 讓分隔符比連結顏色淡 */
+}

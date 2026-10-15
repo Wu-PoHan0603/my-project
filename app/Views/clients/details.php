@@ -70,6 +70,34 @@ $profileFields = [
             返回案主列表
         </a>
 
+        <!-- 案主詳細資料頁的麵包屑導覽 -->
+        <nav class="page-breadcrumb" aria-label="麵包屑導覽">
+
+            <!-- 點擊後回首頁 -->
+            <span>首頁</span>
+
+            <!-- 路徑分隔符 -->
+            <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+
+            <!-- 點擊後回到案主列表 -->
+            <span>案主管理</span>
+            
+            <!-- 路徑分隔符 -->
+            <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+
+            <!-- 點擊後回到案主列表 -->
+            <a href="<?= base_url('/clients') ?>">案主資料</a>
+
+            <!-- 路徑分隔符 -->
+            <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+
+            <!-- 顯示目前案主姓名；若沒有姓名就顯示預設文字 -->
+            <span aria-current="page">
+                <?= esc($client['ct_name'] ?? '案主詳細資料') ?>
+            </span>
+
+        </nav>
+
         <!-- 顯示案主姓名 -->
         <h1>
             案主詳細資料：<?= esc($client['ct_name'] ?? '未命名案主') ?>
