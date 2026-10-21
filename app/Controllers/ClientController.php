@@ -607,6 +607,354 @@ class ClientController extends BaseController
             ->with('success', '案主資料已永久刪除');
     }
 
+    // 接收指定案主上傳的人物照片
+    public function uploadAttachment(int $id)
+    {
+        // 建立案主資料模型，用來確認案主是否存在
+        $clientModel = new ClientModel();
+
+        // 依照網址中的案主編號查詢案主
+        $client = $clientModel->find($id);
+
+        // 找不到案主就回到列表並顯示錯誤
+        if ($client === null) {
+            return redirect()
+                ->to('clients')
+                ->with('error', '找不到指定的案主資料');
+        }
+
+        // 取得表單中 name="attachment" 的上傳檔案
+        $file = $this->request->getFile('attachment');
+
+        // 確認檔案存在、上傳成功，而且尚未被移動
+        if (
+            $file === null
+            || ! $file->isValid()
+            || $file->hasMoved()
+        ) {
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '照片上傳失敗，請重新選擇檔案');
+        }
+
+        // 設定人物照片的最大檔案大小為 10 MB
+        $maxFileSize = 10 * 1024 * 1024;
+
+        // 取得照片大小，轉成整數方便比較
+        $fileSize = (int) $file->getSize();
+
+        // 拒絕空檔案或超過大小限制的檔案
+        if ($fileSize <= 0 || $fileSize > $maxFileSize) {
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '照片不可為空檔案，且大小不可超過 10 MB');
+        }
+
+        // 只允許這些圖片 MIME 類型，並指定儲存時使用的副檔名
+        $allowedMimeTypes = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        ];
+
+        // 由 PHP 判斷檔案實際類型，不只依賴使用者選擇的副檔名
+        $mimeType = $file->getMimeType();
+
+        // MIME 類型不在圖片清單中就拒絕上傳
+        if (! isset($allowedMimeTypes[$mimeType])) {
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '只允許上傳 JPG、PNG、WebP 或 GIF 圖片');
+        }
+
+        // 從允許清單取得安全的副檔名
+        $extension = $allowedMimeTypes[$mimeType];
+
+        // 建立這位案主專屬的私有照片資料夾
+        $clientDirectory = WRITEPATH
+            . 'uploads'
+            . DIRECTORY_SEPARATOR
+            . 'clients'
+            . DIRECTORY_SEPARATOR
+            . $id;
+
+        // 如果資料夾不存在，就建立資料夾
+        if (
+            ! is_dir($clientDirectory)
+            && ! mkdir($clientDirectory, 0750, true)
+            && ! is_dir($clientDirectory)
+        ) {
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '無法建立照片儲存資料夾');
+        }
+
+        // 使用隨機內容產生 SHA-256 檔名，避免使用原始檔名
+        $storedName = hash('sha256', random_bytes(32)) . '.' . $extension;
+
+        // 組合照片移動後的完整路徑，稍後失敗時用來清除檔案
+        $storedPath = $clientDirectory
+            . DIRECTORY_SEPARATOR
+            . $storedName;
+
+        // 原始檔名只存入資料庫供畫面顯示，不用來命名實際檔案
+        $originalName = $file->getClientName();
+
+        // 取得目前登入者的使用者編號
+        $uploadedBy = session()->get('user_id');
+
+        // 準備寫入 client_attachments 的資料
+        $attachmentData = [
+            'client_id'    => $id,
+            'category'     => 'client_photo',
+            'original_name' => $originalName,
+            'stored_name'  => $storedName,
+            'mime_type'    => $mimeType,
+            'file_size'    => $fileSize,
+            'uploaded_by'  => is_numeric($uploadedBy)
+                ? (int) $uploadedBy
+                : null,
+        ];
+
+        // 建立附件模型，準備新增照片資料
+        $attachmentModel = new ClientAttachmentModel();
+
+        try {
+            // 將照片移到案主的私有資料夾，並使用雜湊檔名儲存
+            $file->move($clientDirectory, $storedName);
+
+            // 將照片資訊新增到附件資料表
+            $insertResult = $attachmentModel->insert($attachmentData);
+
+            // insert 回傳 false 代表資料庫沒有成功新增
+            if ($insertResult === false) {
+                throw new \RuntimeException('照片資料寫入資料庫失敗');
+            }
+        } catch (\Throwable $exception) {
+            // 若資料庫新增失敗，刪除剛才已經移動的照片
+            if (is_file($storedPath)) {
+                unlink($storedPath);
+            }
+
+            // 將詳細錯誤記錄在 CI4 日誌，不直接顯示給使用者
+            log_message(
+                'error',
+                '案主人像上傳失敗：' . $exception->getMessage()
+            );
+
+            // 回到案主詳細資料頁並顯示一般錯誤訊息
+            return redirect()
+                ->to('clients/' . $id . '/details')
+                ->with('error', '照片儲存失敗，請稍後再試');
+        }
+
+        // 照片和資料庫資料都成功後，回到案主詳細資料頁
+        return redirect()
+            ->to('clients/' . $id . '/details')
+            ->with('success', '人物照片上傳成功');
+    }
+
+    // 顯示指定案主的附件
+    public function viewAttachment(int $clientId, int $attachmentId)
+    {
+        // 確認網址中的案主存在
+        $clientModel = new ClientModel();
+        $client = $clientModel->find($clientId);
+
+        // 案主不存在時回傳 404
+        if ($client === null) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 只查詢屬於這位案主的指定附件
+        $attachmentModel = new ClientAttachmentModel();
+        $attachment = $attachmentModel
+            ->where('client_id', $clientId)
+            ->find($attachmentId);
+
+        // 附件不存在或不屬於這位案主時回傳 404
+        if ($attachment === null) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 取得這位案主的私人附件資料夾
+        $clientDirectory = realpath(
+            WRITEPATH . 'uploads/clients/' . $clientId
+        );
+
+        // 資料夾不存在時回傳 404
+        if ($clientDirectory === false) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 只取資料庫記錄中的檔名，不接受資料夾路徑
+        $storedName = basename((string) ($attachment['stored_name'] ?? ''));
+
+        // 檔名空白時回傳 404
+        if ($storedName === '') {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 組出附件完整路徑，並確認檔案實際存在
+        $filePath = realpath(
+            $clientDirectory . DIRECTORY_SEPARATOR . $storedName
+        );
+
+        // 檔案不存在時回傳 404
+        if ($filePath === false) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 確認檔案仍在這位案主的資料夾內
+        $allowedPathPrefix = $clientDirectory . DIRECTORY_SEPARATOR;
+
+        // 路徑不符合或不是一般檔案時回傳 404
+        if (
+            ! str_starts_with($filePath, $allowedPathPrefix)
+            || ! is_file($filePath)
+            || ! is_readable($filePath)
+        ) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 根據實際檔案內容判斷 MIME 類型
+        $actualMimeType = mime_content_type($filePath);
+
+        // 只允許顯示圖片與 PDF
+        $allowedMimeTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'application/pdf',
+        ];
+
+        // 檔案類型不允許時回傳 404
+        if (! in_array($actualMimeType, $allowedMimeTypes, true)) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 讀取檔案內容
+        $fileContents = file_get_contents($filePath);
+
+        // 檔案讀取失敗時回傳 404
+        if ($fileContents === false) {
+            return $this->response->setStatusCode(404);
+        }
+
+        // 將圖片或 PDF 以瀏覽器可顯示的方式回傳
+        return $this->response
+            ->setContentType($actualMimeType)
+            ->setHeader('Content-Disposition', 'inline')
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('Cache-Control', 'private, no-store')
+            ->setBody($fileContents);
+    }
+
+    // 永久刪除指定案主的附件
+    public function deleteAttachment(int $clientId, int $attachmentId)
+    {
+        // 確認網址中的案主存在
+        $clientModel = new ClientModel();
+        $client = $clientModel->find($clientId);
+
+        // 案主不存在時回到案主列表
+        if ($client === null) {
+            return redirect()
+                ->to('/clients')
+                ->with('error', '找不到指定的案主資料');
+        }
+
+        // 只查詢屬於這位案主的指定附件
+        $attachmentModel = new ClientAttachmentModel();
+        $attachment = $attachmentModel
+            ->where('client_id', $clientId)
+            ->find($attachmentId);
+
+        // 附件不存在或不屬於這位案主時回到詳細資料頁
+        if ($attachment === null) {
+            return redirect()
+                ->to('/clients/' . $clientId . '/details')
+                ->with('error', '找不到指定的附件');
+        }
+
+        // 只取資料庫記錄中的檔名，不接受資料夾路徑
+        $storedName = basename((string) ($attachment['stored_name'] ?? ''));
+
+        // 檔名空白時停止刪除
+        if ($storedName === '') {
+            return redirect()
+                ->to('/clients/' . $clientId . '/details')
+                ->with('error', '附件檔名資料無效');
+        }
+
+        // 先設定實體檔案路徑；檔案可能已不存在
+        $filePath = false;
+
+        // 取得這位案主的私人附件資料夾
+        $clientDirectory = realpath(
+            WRITEPATH . 'uploads/clients/' . $clientId
+        );
+
+        // 資料夾存在時，才繼續確認檔案路徑
+        if ($clientDirectory !== false) {
+            // 取得附件實際路徑；檔案不存在時會得到 false
+            $resolvedFilePath = realpath(
+                $clientDirectory . DIRECTORY_SEPARATOR . $storedName
+            );
+
+            // 檔案存在時，確認它仍位於案主資料夾內
+            if ($resolvedFilePath !== false) {
+                // 建立允許的資料夾路徑前綴
+                $allowedPathPrefix = $clientDirectory . DIRECTORY_SEPARATOR;
+
+                // 發現路徑不安全或不是一般檔案時停止刪除
+                if (
+                    ! str_starts_with($resolvedFilePath, $allowedPathPrefix)
+                    || ! is_file($resolvedFilePath)
+                ) {
+                    return redirect()
+                        ->to('/clients/' . $clientId . '/details')
+                        ->with('error', '附件路徑資料無效');
+                }
+
+                // 保存通過檢查的實體檔案路徑
+                $filePath = $resolvedFilePath;
+            }
+        }
+
+        // 第二個參數 true 代表直接永久刪除資料庫記錄
+        $deleted = $attachmentModel->delete($attachmentId, true);
+
+        // 資料庫記錄刪除失敗時，不刪除實體檔案
+        if (! $deleted) {
+            return redirect()
+                ->to('/clients/' . $clientId . '/details')
+                ->with('error', '附件資料刪除失敗');
+        }
+
+        // 資料庫記錄刪除成功後，再刪除實體檔案
+        if ($filePath !== false && is_file($filePath)) {
+            // @ 避免檔案系統錯誤直接中斷頁面，失敗時會寫入系統紀錄
+            $fileDeleted = @unlink($filePath);
+
+            // 記錄實體檔案刪除失敗，供管理者後續檢查
+            if (! $fileDeleted) {
+                log_message('error', '案主附件資料已刪除，但實體檔案清理失敗');
+
+                // 提醒使用者資料記錄已刪除，但檔案清理需要處理
+                return redirect()
+                    ->to('/clients/' . $clientId . '/details')
+                    ->with('error', '附件資料已刪除，但檔案清理失敗，請聯絡管理者');
+            }
+        }
+
+        // 資料庫記錄與實體檔案都完成刪除
+        return redirect()
+            ->to('/clients/' . $clientId . '/details')
+            ->with('success', '附件已永久刪除');
+    }
+
     // 回傳指定案主的最新照片，供姓名旁的預覽使用
     public function photoPreview(int $id)
     {
@@ -614,6 +962,7 @@ class ClientController extends BaseController
         $attachmentModel = new ClientAttachmentModel();
         $attachment = $attachmentModel
             ->where('client_id', $id)
+            ->where('category', 'client_photo')
             ->like('mime_type', 'image/', 'after')
             ->orderBy('id', 'DESC')
             ->first();

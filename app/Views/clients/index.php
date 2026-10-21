@@ -24,7 +24,7 @@
             
             
             <nav>
-                <a href="#">首頁</a>
+                <a href="<?= base_url('/') ?>">首頁</a>
 
                 <!-- 點擊「案主管理」可展開或收合子選單 -->
                 <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
@@ -131,28 +131,59 @@
         <!-- 網頁右側的主要內容 -->
         <main class="content">
 
-            <!-- 麵包屑導覽：顯示從首頁到目前頁面的路徑 -->
-            <nav class="page-breadcrumb" aria-label="麵包屑導覽">
+            <!-- 固定在上方的頁面工具區 -->
+            <div class="client-sticky-top">
 
-                <!-- 點擊「首頁」回到網站首頁 -->
-                <span>首頁</span>
+                <!-- 麵包屑導覽：顯示從首頁到目前頁面的路徑 -->
+                <nav class="page-breadcrumb" aria-label="麵包屑導覽">
+    
+                    <!-- 點擊「首頁」回到網站首頁 -->
+                    <span>首頁</span>
+    
+                    <!-- 大於符號是路徑分隔符，不是連結 -->
+                    <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+    
+                    <!-- 點擊「個案管理」回到案主列表 -->
+                    <span>案主管理</span>
+    
+                    <!-- 分隔目前所在頁與上一層路徑 -->
+                    <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+    
+                    <!-- aira-current 表示這是目前所在頁面 -->
+                    <span aria-current="page">案主資料</span>
+    
+                </nav>
+    
+                <!-- 頁面標題 -->
+                <h1>案主資料管理</h1>
+                
+                <!-- 搜尋案主區域 -->
+                <!-- 搜尋表單使用GET action指定送回/clients -->
+                <form action="<?= base_url('clients') ?>" class="search-form" method="get">
+                    <!-- label的for對應輸入框id 點擊文字時，游標會進入輸入框 -->
+                    <label for="keyword">搜索案主</label>
 
-                <!-- 大於符號是路徑分隔符，不是連結 -->
-                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+                    <!-- name="keyword" 是送給Controller 的欄位名稱 value 顯示目前搜尋關鍵字 搜尋後輸入框不會變回空白 -->
+                    <input type="text" id="keyword" name="keyword" value="<?= esc(old('keyword', $keyword ?? '')) ?>" placeholder="請輸入案主名稱">
 
-                <!-- 點擊「個案管理」回到案主列表 -->
-                <span>案主管理</span>
+                    <!-- 送出GET搜尋請求 -->
+                    <button type="submit" class="btn btn-primary">搜尋</button>
 
-                <!-- 分隔目前所在頁與上一層路徑 -->
-                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+                    <!-- 清除搜尋條件 直接回到沒有keyword的/clients -->
+                    <a href="<?= base_url('clients') ?>" class="btn btn-secondary">清除</a>
+                </form>
 
-                <!-- aira-current 表示這是目前所在頁面 -->
-                <span aria-current="page">案主資料</span>
+                <div class="client-list-heading">
 
-            </nav>
+                    <!-- 案主列表的小標題 -->
+                    <h2>案主資料列表</h2>
 
-            <!-- 頁面標題 -->
-            <h1>案主資料管理</h1>
+                    <div class="client-table-toolbar">
+                        <!-- 前往新增案主頁；沿用目前 CSS 的紅色按鈕樣式 -->
+                        <a href="<?= base_url('clients/create') ?>" class="btn btn-danger">新增案主</a>
+                    </div>
+                </div>
+            </div>
 
             <!--
                 判斷 Session 中是否存在新增成功訊息
@@ -172,31 +203,8 @@
                 </p>
             <?php endif ?>
 
-            <!-- 搜尋案主區域 -->
-            <!-- 搜尋表單使用GET action指定送回/clients -->
-            <form action="<?= base_url('clients') ?>" class="search-form" method="get">
-                <!-- label的for對應輸入框id 點擊文字時，游標會進入輸入框 -->
-                <label for="keyword">搜索案主</label>
-
-                <!-- name="keyword" 是送給Controller 的欄位名稱 value 顯示目前搜尋關鍵字 搜尋後輸入框不會變回空白 -->
-                <input type="text" id="keyword" name="keyword" value="<?= esc(old('keyword', $keyword ?? '')) ?>" placeholder="請輸入案主名稱">
-
-                <!-- 送出GET搜尋請求 -->
-                <button type="submit" class="btn btn-primary">搜尋</button>
-
-                <!-- 清除搜尋條件 直接回到沒有keyword的/clients -->
-                <a href="<?= base_url('clients') ?>" class="btn btn-secondary">清除</a>
-            </form>
-
             <!-- 案主資料表格區域 -->
             <section class="client-table-section">
-
-                    <h2>案主資料列表</h2>
-
-                    <div class="client-table-toolbar">
-                        <!-- 前往新增案主頁；沿用目前 CSS 的紅色按鈕樣式 -->
-                        <a href="<?= base_url('clients/create') ?>" class="btn btn-danger">新增案主</a>
-                    </div>
                     
 
                     <?php if (!empty($clients)): ?>
@@ -435,6 +443,31 @@
 
 <!-- 加上版本參數，讓瀏覽器載入最新的 JavaScript -->
 <script src="<?= base_url('js/client-detail.js?v=3') ?>"></script>
+
+<!-- 獨立執行上方固定區塊高度的計算程式 -->
+<script>
+// 等頁面HTML載入後再尋找固定區塊
+document.addEventListener('DOMContentLoaded', function(){
+    // 找到剛才建立的上方固定區塊
+    const stickyTop = document.querySelector('.client-sticky-top');
+    // 找不到區塊時就停止執行，避免出錯
+    if (!stickyTop) {
+        return;
+    }
+    //讀取區塊高度，設定成CSS可以使用的變數
+    function updateStickyHeight() {
+        const height = stickyTop.getBoundingClientRect().height;
+        document.documentElement.style.setProperty(
+            '--client-sticky-top-height',
+            height + 'px'
+        );
+    }
+    // 頁面載入時先計算一次
+    updateStickyHeight();
+    // 視窗大小改變時重新計算高度
+    window.addEventListener('resize', updateStickyHeight);
+});
+</script>
 </body>
     
 </html>

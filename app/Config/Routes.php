@@ -49,6 +49,13 @@ $routes->get(
     ['filter' => 'auth']
 );
 
+// 顯示指定案主的附件；網址中的兩個數字依序是案主編號與附件編號
+$routes->get(
+    'clients/(:num)/attachments/(:num)', // 附件預覽網址
+    'ClientController::viewAttachment/$1/$2', // 將案主編號與附件編號傳給 Controller
+    ['filter' => 'auth'] // 限制已登入的使用者才能查看
+);
+
 
 
 
@@ -95,4 +102,21 @@ $routes->post(
     'clients/(:num)/details',
     'ClientController::updateDetails/$1',
     ['filter' => 'auth']
+);
+
+// 接收上傳案主附件的 POST 請求
+// 網址中的 (:num) 代表案主編號
+// 將案主編號傳給 uploadAttachment()
+// 限制已登入的使用者才能上傳
+$routes->post(
+    'clients/(:num)/attachments',
+    'ClientController::uploadAttachment/$1',
+    ['filter' => 'auth'] 
+);
+
+// 永久刪除指定案主的附件
+$routes->post(
+    'clients/(:num)/attachments/(:num)/delete', // 附件刪除網址
+    'ClientController::deleteAttachment/$1/$2', // 傳入案主編號與附件編號
+    ['filter' => 'auth'] // 限制已登入的使用者才能刪除
 );

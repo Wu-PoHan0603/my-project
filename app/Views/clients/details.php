@@ -54,7 +54,6 @@ $profileFields = [
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- 載入專案共用樣式 -->
     <link rel="stylesheet" href="<?= base_url('css/style.css') ?>">
@@ -201,6 +200,19 @@ $profileFields = [
                         >
                     </div>
 
+                    <!-- 路線編號儲存在clients資料表 -->
+                    <div class="client-detail-form-field">
+                        <label for="route_no">路線編號</label>
+                        <input 
+                            type="number"
+                            id="route_no"
+                            name="route_no"
+                            value="<?= esc(old('route_no', $client['route_no'] ?? '', 'attr')) ?>"
+                            require
+                            step="1"
+                        >
+                    </div>
+
                     <?php foreach ($profileFields as $field): ?>
                         <?php
                         // 取得欄位名稱，用它讀取個人資料表中的原始值
@@ -282,21 +294,129 @@ $profileFields = [
                 </div>
             </form>
 
+            <!-- 案主人像上傳區 -->
+            <h2>上傳人物照片</h2>
+
+            <!-- multipart/form-data 才能讓表單傳送檔案 -->
+            <form
+                action="<?= esc(base_url('clients/' . (int) $client['id'] . '/attachments'), 'attr') ?>"
+                method="post"
+                enctype="multipart/form-data"
+                class="client-attachment-upload-form"
+            >
+                <!-- 加入 CSRF 欄位，讓 CI4 驗證表單來源 -->
+                <?= csrf_field() ?>
+
+                <!-- label 的 for 要對應檔案欄位的 id -->
+                <label for="client-photo">選擇人物照片</label>
+
+                <!-- accept 限制檔案選擇視窗優先顯示圖片格式 -->
+                <input
+                    type="file"
+                    id="client-photo"
+                    name="attachment"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    required
+                >
+
+                <!-- 送出後由 uploadAttachment() 再做後端檢查 -->
+                <button type="submit" class="btn btn-primary">上傳照片</button>
+            </form>
+
+
             <!-- 顯示附件資料 -->
-            <h2>照片與文件</h2>
+            <h2>人物照片</h2>
 
             <?php if (! empty($attachments)): ?>
+                <?php
+                // 將資料庫中的分類代碼轉成畫面顯示的中文
+                $categoryLabels = [
+                    'family_tree' => '家系圖',
+                    'resource_map' => '資源生態圖',
+                    'client_photo' => '案主大頭照',
+                    'other' => '其他',
+                ];
+                ?>
+
+                <!-- 列出這位案主已上傳的附件 -->
                 <ul class="client-attachment-list">
                     <?php foreach ($attachments as $attachment): ?>
-                        <li>
-                            <?= esc($attachment['original_name'] ?? '未命名檔案') ?>
-                            <?php if (! empty($attachment['category'])): ?>
-                                （<?= esc($attachment['category']) ?>）
-                            <?php endif; ?>
+                        <?php
+                        // 取得附件編號，供預覽與刪除網址使用
+                        $attachmentId = (int) ($attachment['id'] ?? 0);
+
+                        // 取得原始檔名，僅在畫面顯示
+                        $originalName = $attachment['original_name'] ?? '未命名檔案';
+
+                        // 取得分類代碼；沒有分類時使用空字串
+                        $category = (string) ($attachment['category'] ?? '');
+
+                        // 將分類代碼轉成中文；遇到未知分類時顯示原代碼
+                        $categoryLabel = $categoryLabels[$category] ?? $category;
+                        ?>
+
+                        <!-- 每個附件各自顯示名稱、分類與操作按鈕 -->
+                        <li class="client-attachment-item">
+                            <span>
+                                <!-- 使用 esc() 避免檔名被當成 HTML 執行 -->
+                                <?= esc($originalName) ?>
+
+                                <!-- 分類有內容時才顯示分類文字 -->
+                                <?php if ($categoryLabel !== ''): ?>
+                                    （<?= esc($categoryLabel) ?>）
+                                <?php endif; ?>
+                            </span>
+
+                            <!-- 附件的預覽與刪除操作 -->
+                            <div class="action-buttons">
+                                <!-- 透過登入保護的 Controller 路由開啟圖片或 PDF -->
+                                <a
+                                    class="btn btn-primary"
+                                    href="<?= esc(
+                                        base_url(
+                                            'clients/'
+                                            . (int) $client['id']
+                                            . '/attachments/'
+                                            . $attachmentId
+                                        ),
+                                        'attr'
+                                    ) ?>"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    預覽／開啟
+                                </a>
+
+                                <!-- 永久刪除使用 POST 表單，不用 GET 連結 -->
+                                <form
+                                    action="<?= esc(
+                                        base_url(
+                                            'clients/'
+                                            . (int) $client['id']
+                                            . '/attachments/'
+                                            . $attachmentId
+                                            . '/delete'
+                                        ),
+                                        'attr'
+                                    ) ?>"
+                                    method="post"
+                                    class="delete-from"
+                                    onsubmit="return confirm('確定要永久刪除這個附件嗎？')"
+                                >
+                                    <!-- 加入 CSRF Token，供網站的 CSRF Filter 驗證 -->
+                                    <?= csrf_field() ?>
+
+                                    <!-- 送出刪除請求；Controller 會永久刪除資料記錄與檔案 -->
+                                    <button type="submit" class="btn btn-danger">
+                                        永久刪除
+                                    </button>
+                                </form>
+                            </div>
                         </li>
                     <?php endforeach; ?>
                 </ul>
             <?php else: ?>
+                <!-- 沒有附件時顯示提示 -->
                 <p>目前沒有附件。</p>
             <?php endif; ?>
         </section>

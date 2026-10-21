@@ -1518,3 +1518,151 @@ body {
 .page-breadcrumb-separator {
     color: #9ca3af; /* 讓分隔符比連結顏色淡 */
 }
+
+/* 固定麵包屑、頁面標題、搜尋列與列表工具列 */
+.client-sticky-top {
+    position: sticky; /* 捲動時固定位置 */
+    top: 0; /* 貼齊畫面上緣 */
+    z-index: 30; /* 顯示在表格上方 */
+    background-color: #f5f6f8; /* 遮住後方捲動的內容 */
+}
+
+/* 列表標題靠左，新增按鈕靠右 */
+.client-list-heading {
+    display: flex; /* 水平排列標題和按鈕 */
+    align-items: center; /* 垂直置中 */
+    justify-content: space-between; /* 分別靠左、靠右 */
+    gap: 12px; /* 保留間距 */
+}
+
+/* 避免標題被擠窄換行 */
+.client-list-heading h2 {
+    margin: 0; /* 移除標題預設外距 */
+    white-space: nowrap; /* 保持標題在同一行 */
+}
+
+/* 表格表頭固定在上方工具列下方 */
+.client-table thead th {
+    position: sticky; /* 捲動時固定表頭 */
+    top: var(--client-sticky-top-height, 0px); /* 使用上方區塊的實際高度 */
+    z-index: 20; /* 顯示在資料列上方 */
+    background-color: #e9ecef; /* 保留表頭底色 */
+}
+
+/* ==============================
+   案主管理系統首頁：桌面版樣式
+   ============================== */
+
+/* 標示左側選單目前位於首頁 */
+.sidebar nav .home-nav-current {
+    display: block; /* 讓首頁連結佔滿選單寬度 */
+    padding: 12px 13px; /* 設定連結內距 */
+    border-radius: 7px; /* 圓角與側欄其他連結一致 */
+    background-color: #3a535c; /* 使用較亮的深色表示目前頁面 */
+    color: #ffffff; /* 讓文字在深色背景上清楚顯示 */
+    font-weight: 700; /* 加粗目前頁面的文字 */
+    text-decoration: none; /* 移除超連結底線 */
+}
+
+/* 首頁歡迎區塊 */
+.home-welcome {
+    margin: 18px 0 34px; /* 設定與上下區塊的距離 */
+    padding: 26px 30px; /* 增加白色區塊內部留白 */
+    border-left: 4px solid #2476cf; /* 用藍色線條標示歡迎區 */
+    border-radius: 9px; /* 設定區塊圓角 */
+    background-color: #ffffff; /* 使用白色背景 */
+    box-shadow: 0 2px 8px rgba(26, 43, 52, 0.06); /* 加上淡淡陰影，區分背景 */
+}
+
+/* 歡迎標題 */
+.home-welcome h1 {
+    margin: 0 0 8px; /* 移除標題上方空白，保留標題與說明間距 */
+    color: #172126; /* 設定標題文字顏色 */
+    font-size: 28px; /* 放大首頁問候語 */
+}
+
+/* 歡迎區塊的說明文字 */
+.home-welcome p {
+    margin: 0; /* 移除段落預設外距 */
+    color: #68757b; /* 使用較柔和的文字顏色 */
+    font-size: 15px; /* 設定說明文字大小 */
+    line-height: 1.7; /* 增加行距，方便閱讀 */
+}
+
+/* 常用功能區標題 */
+.home-actions-section > h2 {
+    margin: 0 0 6px; /* 設定標題下方間距 */
+    color: #172126; /* 設定標題文字顏色 */
+    font-size: 21px; /* 突顯區塊標題 */
+}
+
+/* 常用功能區說明 */
+.home-actions-section > p {
+    margin: 0 0 18px; /* 與下方功能項目保持距離 */
+    color: #68757b; /* 使用次要文字顏色 */
+}
+
+/* 將三個常用功能排成同一列 */
+.home-actions {
+    display: grid; /* 使用網格排列 */
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 平均分成三欄 */
+    gap: 18px; /* 設定功能項目之間的間距 */
+}
+
+/* 常用功能項目的外觀 */
+.home-action {
+    display: flex; /* 讓內容可以直向排列 */
+    flex-direction: column; /* 標題、說明和連結由上往下排列 */
+    min-height: 190px; /* 讓三個功能項目高度一致 */
+    padding: 22px; /* 增加項目內部留白 */
+    border: 1px solid #dce2e5; /* 加上淡色邊框 */
+    border-radius: 9px; /* 設定項目圓角 */
+    background-color: #ffffff; /* 使用白色背景 */
+    color: #172126; /* 設定項目文字顏色 */
+    text-decoration: none; /* 移除超連結底線 */
+    box-shadow: 0 2px 8px rgba(26, 43, 52, 0.04); /* 加上輕微陰影 */
+    transition: transform 0.15s ease, box-shadow 0.15s ease; /* 讓滑過效果平順 */
+}
+
+/* 滑鼠移到功能項目時稍微浮起 */
+.home-action:hover {
+    transform: translateY(-2px); /* 向上移動兩個像素 */
+    box-shadow: 0 5px 14px rgba(26, 43, 52, 0.10); /* 加強陰影表示可點擊 */
+}
+
+/* 鍵盤選取功能項目時顯示清楚的外框 */
+.home-action:focus-visible {
+    outline: 3px solid #2476cf; /* 顯示鍵盤焦點 */
+    outline-offset: 3px; /* 讓外框與項目保持距離 */
+}
+
+/* 功能項目的名稱 */
+.home-action h3 {
+    margin: 0 0 9px; /* 設定名稱和說明的間距 */
+    font-size: 17px; /* 突顯功能名稱 */
+}
+
+/* 功能項目的說明文字 */
+.home-action p {
+    margin: 0 0 18px; /* 與下方連結保持距離 */
+    color: #68757b; /* 使用次要文字顏色 */
+    line-height: 1.7; /* 增加行距 */
+}
+
+/* 功能項目下方的前往連結文字 */
+.home-action span {
+    margin-top: auto; /* 將連結推到項目底部 */
+    color: #2476cf; /* 使用藍色表示一般功能連結 */
+    font-size: 14px; /* 設定連結文字大小 */
+    font-weight: 700; /* 加粗連結文字 */
+}
+
+/* 新增案主功能使用紅色，與原本的新增按鈕顏色一致 */
+.home-action-add {
+    border-top: 4px solid #dc3545; /* 在卡片上方加紅色識別線 */
+}
+
+/* 新增案主的前往連結也使用紅色 */
+.home-action-add span {
+    color: #dc3545; /* 讓新增功能的連結與紅色識別線一致 */
+}
