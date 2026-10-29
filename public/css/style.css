@@ -1521,7 +1521,7 @@ body {
 
 /* 固定麵包屑、頁面標題、搜尋列與列表工具列 */
 .client-sticky-top {
-    position: sticky; /* 捲動時固定位置 */
+    position: sticky; /* 捲動時固定位置 與TOP搭配 */
     top: 0; /* 貼齊畫面上緣 */
     z-index: 30; /* 顯示在表格上方 */
     background-color: #f5f6f8; /* 遮住後方捲動的內容 */

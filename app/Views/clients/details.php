@@ -73,7 +73,7 @@ $profileFields = [
         <nav class="page-breadcrumb" aria-label="麵包屑導覽">
 
             <!-- 點擊後回首頁 -->
-            <span>首頁</span>
+            <a href="<?= base_url('/') ?>">首頁</a>
 
             <!-- 路徑分隔符 -->
             <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>

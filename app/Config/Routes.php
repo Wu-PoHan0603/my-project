@@ -8,19 +8,19 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 // 對應網址：GET clients
-$routes->get('clients', 'ClientController::index'); 
+$routes->get('clients', 'ClientController::index', ['filter' => 'auth']); 
 
 // 對應網址：GET clients/create
-$routes->get('clients/create', 'ClientController::create'); 
+$routes->get('clients/create', 'ClientController::create', ['filter' => 'auth']); 
 
 //對應網址：GET clients/edit/:num取得的數字 
 //(:num) 是 CI4 Route 的數字佔位符,只接受數字
 // $1 代表網址中 (:num) 取得的數字
-$routes->get('clients/edit/(:num)','ClientController::edit/$1');
+$routes->get('clients/edit/(:num)','ClientController::edit/$1', ['filter' => 'auth']);
 
 //顯示資源回收桶
 //使用GET,因為目前只讀取及顯示資料
-$routes->get('clients/trash', 'ClientController::trash');
+$routes->get('clients/trash', 'ClientController::trash', ['filter' => 'auth']);
 
 // 顯示登入頁：瀏覽器用 GET 開啟 /login
 $routes->get('login', 'AuthController::login');
@@ -120,3 +120,6 @@ $routes->post(
     'ClientController::deleteAttachment/$1/$2', // 傳入案主編號與附件編號
     ['filter' => 'auth'] // 限制已登入的使用者才能刪除
 );
+
+// 開啟 Smarty 測試頁
+$routes->get('smarty-demo', 'SmartyDemoController::index');
