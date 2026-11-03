@@ -40,6 +40,8 @@
                     </div>
                 </details>
 
+                <a href="<?= base_url('delivery_staff/index.php') ?>">送餐員資料</a>
+
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
             <?php

@@ -4,28 +4,25 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
-// get 顯示
+
 $routes->get('/', 'Home::index');
 
-// 對應網址：GET clients
+
 $routes->get('clients', 'ClientController::index', ['filter' => 'auth']); 
 
-// 對應網址：GET clients/create
+
 $routes->get('clients/create', 'ClientController::create', ['filter' => 'auth']); 
 
-//對應網址：GET clients/edit/:num取得的數字 
-//(:num) 是 CI4 Route 的數字佔位符,只接受數字
-// $1 代表網址中 (:num) 取得的數字
+
 $routes->get('clients/edit/(:num)','ClientController::edit/$1', ['filter' => 'auth']);
 
-//顯示資源回收桶
-//使用GET,因為目前只讀取及顯示資料
+
 $routes->get('clients/trash', 'ClientController::trash', ['filter' => 'auth']);
 
-// 顯示登入頁：瀏覽器用 GET 開啟 /login
+
 $routes->get('login', 'AuthController::login');
 
-// 顯示修改密碼頁，並要求使用者已登入
+
 $routes->get(
     'change-password',
     'AuthController::changePassword',
@@ -56,7 +53,19 @@ $routes->get(
     ['filter' => 'auth'] // 限制已登入的使用者才能查看
 );
 
+// 登入後才能查看送餐員列表
+$routes->get(
+    'delivery-staff',
+    'DeliveryStaffController::index',
+    ['filter' => 'auth']
+);
 
+// 登入後才能查看路線指派列表
+$routes->get(
+    'delivery-routes',
+    'DeliveryRouteController::index',
+    ['filter' => 'auth']
+);
 
 
 // post 操作
@@ -123,3 +132,17 @@ $routes->post(
 
 // 開啟 Smarty 測試頁
 $routes->get('smarty-demo', 'SmartyDemoController::index');
+
+// 登入後才能新增送餐員
+$routes->post(
+    'delivery-staff',
+    'DeliveryStaffController::store',
+    ['filter' => 'auth']
+);
+
+// 登入後才能修改指定路線的送餐員指派
+$routes->post(
+    'delivery-routes/assign/(:num)',
+    'DeliveryRouteController::assign/$1',
+    ['filter' => 'auth']
+);

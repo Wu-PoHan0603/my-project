@@ -1666,3 +1666,74 @@ body {
 .home-action-add span {
     color: #dc3545; /* 讓新增功能的連結與紅色識別線一致 */
 }
+
+/* 路線指派頁的主要版面 */
+.delivery-route-page {
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 24px;
+}
+
+/* 路線清單卡片 */
+.delivery-route-card {
+    margin-top: 24px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #dfe3e8;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(20, 35, 50, 0.06);
+}
+
+/* 路線表格 */
+.delivery-route-table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+}
+
+/* 表格標題與內容儲存格 */
+.delivery-route-table th,
+.delivery-route-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e8eb;
+    text-align: left;
+}
+
+/* 表格標題列底色 */
+.delivery-route-table th {
+    background: #f1f4f7;
+}
+
+/* 指派表單中的下拉選單與按鈕並排 */
+.delivery-route-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 下拉選單樣式 */
+.delivery-route-form select {
+    min-height: 40px;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid #cbd2d9;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 15px;
+}
+
+/* 錯誤訊息 */
+.delivery-message-error {
+    margin-top: 16px;
+    padding: 12px 16px;
+    color: #9e2727;
+    background: #fff0f0;
+    border-radius: 8px;
+}
+
+/* 螢幕較窄時允許表格橫向捲動 */
+@media (max-width: 800px) {
+    .delivery-route-card {
+        overflow-x: auto;
+    }
+}
