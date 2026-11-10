@@ -146,17 +146,20 @@
                 </div>
             {/if}
 
-            {* 送餐員資料列表 *}
+            {* 顯示送餐員資料列表 *}
             <section class="delivery-staff-card">
                 <div class="delivery-staff-list-heading">
                     <h2>送餐員資料列表</h2>
 
-                    {* 新增送餐員 *}
-                    <a href="{$createStaffUrl}" class="btn btn-danger">
-                    新增送餐員
-                    </a>
+                    {* 只有管理員與工作人員能新增送餐員 *}
+                    {if $canManageStaff}
+                        <a href="{$createStaffUrl}" class="btn btn-danger">
+                            新增送餐員
+                        </a>
+                    {/if}
                 </div>
 
+                {* 有送餐員資料時顯示表格 *}
                 {if !empty($staffList)}
                     <table class="delivery-staff-table">
                         <thead>
@@ -187,7 +190,8 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            {* 前往該送餐員的詳細資料 *}
+
+                                            {* 所有可查看資料的使用者都能開啟詳細資料 *}
                                             <a
                                                 href="{$staffListUrl}/{$staff.id}/detail"
                                                 class="btn btn-primary"
@@ -195,36 +199,40 @@
                                                 詳細資料
                                             </a>
 
-                                            {* 前往該送餐員的修改頁面 *}
-                                            <a
-                                                href="{$staffListUrl}/{$staff.id}/edit"
-                                                class="btn btn-warning"
-                                            >
-                                                修改
-                                            </a>
+                                            {* 只有管理員與工作人員能執行管理操作 *}
+                                            {if $canManageStaff}
 
-                                            {* 路線指派 *}
-                                            <a
-                                                href="{$deliveryRoutesUrl}"
-                                                class="btn btn-primary"
-                                            >
-                                                路線指派
-                                            </a>
+                                                {* 前往該送餐員的修改頁面 *}
+                                                <a
+                                                    href="{$staffListUrl}/{$staff.id}/edit"
+                                                    class="btn btn-warning"
+                                                >
+                                                    修改
+                                                </a>
 
-                                            {* 刪除會修改資料，因此用 POST 表單送出 *}
-                                            <form
-                                                action="{$staffListUrl}/delete/{$staff.id}"
-                                                method="post"
-                                                class="action-form"
-                                                onsubmit="return confirm('確定要永久刪除這位送餐員嗎？')"
-                                            >
-                                                {* 輸出 CI4 產生的 CSRF 欄位 *}
-                                                {$csrfField nofilter}
+                                                {* 前往路線指派頁 *}
+                                                <a
+                                                    href="{$deliveryRoutesUrl}"
+                                                    class="btn btn-primary"
+                                                >
+                                                    路線指派
+                                                </a>
 
-                                                <button type="submit" class="btn btn-danger">
-                                                    刪除
-                                                </button>
-                                            </form>
+                                                {* 刪除會修改資料，因此使用 POST 表單送出 *}
+                                                <form
+                                                    action="{$staffListUrl}/delete/{$staff.id}"
+                                                    method="post"
+                                                    class="action-form"
+                                                    onsubmit="return confirm('確定要永久刪除這位送餐員嗎？')"
+                                                >
+                                                    {* 輸出 CI4 產生的 CSRF 欄位 *}
+                                                    {$csrfField nofilter}
+
+                                                    <button type="submit" class="btn btn-danger">
+                                                        刪除
+                                                    </button>
+                                                </form>
+                                            {/if}
                                         </div>
                                     </td>
                                 </tr>

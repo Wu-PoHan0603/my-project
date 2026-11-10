@@ -16,7 +16,7 @@ class DeliveryStaffController extends Controller
         // 建立送餐員 Model，準備查詢資料
         $staffModel = new DeliveryStaffModel();
 
-        // 查詢送餐員，最新建立的顯示在前面
+        // 查詢送餐員，最新建立的資料顯示在前面
         $staffList = $staffModel
             ->orderBy('id', 'DESC')
             ->findAll();
@@ -24,10 +24,10 @@ class DeliveryStaffController extends Controller
         // 取得欄位驗證錯誤訊息
         $errors = session()->getFlashdata('errors') ?? [];
 
-        // 確保錯誤訊息是陣列
+        // 確認錯誤訊息是陣列
         $errors = is_array($errors) ? $errors : [];
 
-        // 取得成功訊息
+        // 取得新增或修改成功訊息
         $successMessage = session()->getFlashdata('success') ?? '';
 
         // 取得一般操作錯誤訊息
@@ -36,13 +36,13 @@ class DeliveryStaffController extends Controller
         // 建立 Smarty 元件
         $smarty = new SmartyEngine();
 
-        // 傳入側邊欄、網址與登入者資訊
+        // 傳入共用網址、登入者資訊和操作權限
         $this->assignCommonData($smarty);
 
-        // 傳入列表中刪除表單需要的 CSRF 欄位
+        // 傳入刪除表單需要的 CSRF 欄位
         $smarty->assign('csrfField', csrf_field());
 
-        // 傳入送餐員列表頁需要的資料
+        // 傳入列表頁需要的資料與訊息
         $smarty->assign('staffList', $staffList);
         $smarty->assign('errors', $errors);
         $smarty->assign('successMessage', $successMessage);
@@ -60,19 +60,19 @@ class DeliveryStaffController extends Controller
     // 顯示獨立的新增送餐員頁面
     public function create()
     {
-        // 取得欄位驗證錯誤
+        // 取得欄位驗證錯誤訊息
         $errors = session()->getFlashdata('errors') ?? [];
 
-        // 確保錯誤訊息是陣列
+        // 確認錯誤訊息是陣列
         $errors = is_array($errors) ? $errors : [];
 
         // 建立 Smarty 元件
         $smarty = new SmartyEngine();
 
-        // 傳入側邊欄、網址與登入者資訊
+        // 傳入共用網址、登入者資訊和操作權限
         $this->assignCommonData($smarty);
 
-        // 傳入新增頁需要的資料
+        // 傳入新增頁需要的錯誤訊息與舊輸入資料
         $smarty->assign('errors', $errors);
         $smarty->assign('oldStaffName', old('staff_name', ''));
         $smarty->assign('oldPhone', old('phone', ''));
@@ -81,7 +81,7 @@ class DeliveryStaffController extends Controller
         // 產生新增表單需要的 CSRF 欄位
         $smarty->assign('csrfField', csrf_field());
 
-        // 執行新增頁 Smarty 模板
+        // 執行新增頁 Smarty 模板並取得 HTML
         $html = $smarty->fetch('delivery_staff_create.tpl');
 
         // 回傳 UTF-8 HTML 頁面
@@ -146,7 +146,7 @@ class DeliveryStaffController extends Controller
                 ->with('error', '送餐員新增失敗，請稍後再試。');
         }
 
-        // 新增成功後回到列表並顯示訊息
+        // 新增成功後回到列表並顯示成功訊息
         return redirect()
             ->to('/delivery_staff')
             ->with('success', '送餐員新增成功。');
@@ -161,7 +161,9 @@ class DeliveryStaffController extends Controller
 
         // 找不到資料時顯示 404
         if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+            throw PageNotFoundException::forPageNotFound(
+                '找不到指定送餐員'
+            );
         }
 
         // 載入詳細資料畫面並傳入送餐員資料
@@ -179,7 +181,9 @@ class DeliveryStaffController extends Controller
 
         // 找不到資料時顯示 404
         if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+            throw PageNotFoundException::forPageNotFound(
+                '找不到指定送餐員'
+            );
         }
 
         // 載入修改表單並傳入送餐員資料
@@ -197,13 +201,16 @@ class DeliveryStaffController extends Controller
 
         // 找不到資料時顯示 404
         if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+            throw PageNotFoundException::forPageNotFound(
+                '找不到指定送餐員'
+            );
         }
 
         // 取得表單送來的地址
         $postedAddress = $this->request->getPost('address');
 
-        // 整理要更新的資料；表單未送地址欄位時保留原地址
+        // 整理要更新的資料
+        // 表單未送出地址欄位時，保留資料庫中的原地址
         $data = [
             'staff_name' => trim(
                 (string) $this->request->getPost('staff_name')
@@ -245,7 +252,7 @@ class DeliveryStaffController extends Controller
             ],
         ];
 
-        // 驗證失敗時返回修改頁，保留輸入內容和錯誤訊息
+        // 驗證失敗時回到修改頁，保留輸入內容與錯誤訊息
         if (! $this->validateData($data, $rules, $messages)) {
             return redirect()
                 ->to('/delivery_staff/' . $id . '/edit')
@@ -261,7 +268,7 @@ class DeliveryStaffController extends Controller
                 ->with('error', '送餐員資料更新失敗。');
         }
 
-        // 更新成功後回到列表
+        // 更新成功後回到列表並顯示成功訊息
         return redirect()
             ->to('/delivery_staff')
             ->with('success', '送餐員資料更新成功。');
@@ -276,17 +283,20 @@ class DeliveryStaffController extends Controller
 
         // 找不到資料時顯示 404
         if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+            throw PageNotFoundException::forPageNotFound(
+                '找不到指定送餐員'
+            );
         }
 
-        // 刪除資料；路線表的外鍵設定會將相關指派清空
+        // 刪除送餐員資料
+        // 資料表外鍵會將相關路線的送餐員指派清空
         if (! $staffModel->delete($id)) {
             return redirect()
                 ->to('/delivery_staff')
                 ->with('error', '送餐員刪除失敗。');
         }
 
-        // 刪除成功後回到列表
+        // 刪除成功後回到列表並顯示訊息
         return redirect()
             ->to('/delivery_staff')
             ->with('success', '送餐員已刪除。');
@@ -326,10 +336,20 @@ class DeliveryStaffController extends Controller
         $currentRole = session()->get('role') ?? '';
         $currentRoleLabel = $roleLabels[$currentRole] ?? '未設定角色';
 
+        // 管理員與工作人員可以操作送餐員資料
+        $canManageStaff = in_array(
+            $currentRole,
+            ['admin', 'staff'],
+            true
+        );
+
         // 傳入側欄個人設定需要顯示的登入者資訊
         $smarty->assign('currentUsername', $currentUsername);
         $smarty->assign('currentDisplayName', $currentDisplayName);
         $smarty->assign('currentRoleLabel', $currentRoleLabel);
+
+        // 傳入模板，用來控制送餐員管理按鈕是否顯示
+        $smarty->assign('canManageStaff', $canManageStaff);
 
         // 產生登出表單需要的 CSRF 欄位
         $smarty->assign('logoutCsrfField', csrf_field());

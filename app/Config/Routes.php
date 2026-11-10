@@ -11,10 +11,10 @@ $routes->get('/', 'Home::index');
 $routes->get('clients', 'ClientController::index', ['filter' => 'auth']); 
 
 
-$routes->get('clients/create', 'ClientController::create', ['filter' => 'auth']); 
+$routes->get('clients/create', 'ClientController::create', ['filter' => 'role:admin,staff']); 
 
 
-$routes->get('clients/edit/(:num)','ClientController::edit/$1', ['filter' => 'auth']);
+$routes->get('clients/edit/(:num)','ClientController::edit/$1', ['filter' => 'role:admin,staff']);
 
 
 $routes->get('clients/trash', 'ClientController::trash', ['filter' => 'auth']);
@@ -67,7 +67,7 @@ $routes->get(
 $routes->get(
     'delivery_staff/create',
     'DeliveryStaffController::create',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
 // GET 用來查看指定送餐員的詳細資料
@@ -84,7 +84,7 @@ $routes->get(
 $routes->get(
     'delivery_staff/(:num)/edit',
     'DeliveryStaffController::edit/$1',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
 // 顯示路線指派頁
@@ -95,92 +95,131 @@ $routes->get(
 );
 
 
-// post 操作
-// 對應網址：POST clients
-$routes->post('clients', 'ClientController::store'); 
+// POST 操作：會新增、修改或刪除資料的請求
 
-// 接收指定案主送出的修改資料
-// 例如 POST /clients/update/2
-$routes->post('clients/update/(:num)', 'ClientController::update/$1');
+// 新增案主
+// 使用 POST 傳送表單；案主網址已有 auth Filter，這裡限制只有管理員和工作人員能新增
+$routes->post(
+    'clients',
+    'ClientController::store',
+    ['filter' => 'role:admin,staff']
+);
 
-//接收刪除案主的POST請求 因為會改變資料狀態 不使用GET
-//(:num) 代表網址必須提供數字編號
-//$1 會把網址中的編號傳給delete()方式
-$routes->post('clients/delete/(:num)', 'ClientController::delete/$1');
+// 修改指定案主
+// (:num) 代表網址中的案主編號，$1 會將編號傳給 update()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能修改
+$routes->post(
+    'clients/update/(:num)',
+    'ClientController::update/$1',
+    ['filter' => 'role:admin,staff']
+);
 
-//接收還原案主的POST請求 會改變資料庫
-//(:num) 代表網址這個位置只能是數字
-//$1 會將數字傳給restore()方法
-$routes->post('clients/restore/(:num)', 'ClientController::restore/$1');
+// 刪除指定案主
+// 刪除會改變資料狀態，因此使用 POST
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能刪除
+$routes->post(
+    'clients/delete/(:num)',
+    'ClientController::delete/$1',
+    ['filter' => 'role:admin,staff']
+);
 
-//接收永久刪除案主的POST請求
-//(:num) 只能匹配數字
-//$1 會將網址中的案主編號傳給forceDelete()
-$routes->post('clients/force-delete/(:num)', 'ClientController::forceDelete/$1');
+// 還原資源回收桶中的案主
+// (:num) 代表案主編號，$1 會傳給 restore()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能還原
+$routes->post(
+    'clients/restore/(:num)',
+    'ClientController::restore/$1',
+    ['filter' => 'role:admin,staff']
+);
 
-// 接收登入表單：表單用 POST 送到 /login
-$routes->post('login', 'AuthController::attemptLogin');
+// 永久刪除指定案主
+// (:num) 代表案主編號，$1 會傳給 forceDelete()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能永久刪除
+$routes->post(
+    'clients/force-delete/(:num)',
+    'ClientController::forceDelete/$1',
+    ['filter' => 'role:admin,staff']
+);
 
-// 登出會改變 Session，所以使用 POST
-$routes->post('logout', 'AuthController::logout');
+// 接收登入表單
+// 登入前尚未有使用者角色，因此不套用 auth 或 role Filter
+$routes->post(
+    'login',
+    'AuthController::attemptLogin'
+);
 
-// 接收修改密碼表單，並要求使用者已登入
+// 登出目前登入者
+// 登出會清除 Session，因此要求使用者先登入
+$routes->post(
+    'logout',
+    'AuthController::logout',
+    ['filter' => 'auth']
+);
+
+// 更新目前登入者的密碼
+// 所有已登入角色都可以修改自己的密碼
 $routes->post(
     'change-password',
     'AuthController::updatePassword',
     ['filter' => 'auth']
 );
 
-// 接收案主詳細資料表單送出的 POST 請求
-// (:num) 是案主編號，$1 會把編號傳給 updateDetails()
-// auth Filter 確保只有登入使用者能修改案主資料
+// 修改指定案主的詳細資料
+// (:num) 代表案主編號，$1 會傳給 updateDetails()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能修改
 $routes->post(
     'clients/(:num)/details',
     'ClientController::updateDetails/$1',
-    ['filter' => 'auth']
+    ['filter' => 'role:admin,staff']
 );
 
-// 接收上傳案主附件的 POST 請求
-// 網址中的 (:num) 代表案主編號
-// 將案主編號傳給 uploadAttachment()
-// 限制已登入的使用者才能上傳
+// 上傳指定案主的附件
+// (:num) 代表案主編號，$1 會傳給 uploadAttachment()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能上傳
 $routes->post(
     'clients/(:num)/attachments',
     'ClientController::uploadAttachment/$1',
-    ['filter' => 'auth'] 
+    ['filter' => 'role:admin,staff']
 );
 
-// 永久刪除指定案主的附件
+// 刪除指定案主的附件
+// 第一個 (:num) 是案主編號，第二個 (:num) 是附件編號
+// $1、$2 會依序傳給 deleteAttachment()
+// 案主網址已有 auth Filter，這裡限制只有管理員和工作人員能刪除附件
 $routes->post(
-    'clients/(:num)/attachments/(:num)/delete', // 附件刪除網址
-    'ClientController::deleteAttachment/$1/$2', // 傳入案主編號與附件編號
-    ['filter' => 'auth'] // 限制已登入的使用者才能刪除
+    'clients/(:num)/attachments/(:num)/delete',
+    'ClientController::deleteAttachment/$1/$2',
+    ['filter' => 'role:admin,staff']
 );
 
-// 登入後才能新增送餐員表單
+// 新增送餐員
+// 要求使用者已登入，且角色是管理員或工作人員
 $routes->post(
     'delivery_staff',
     'DeliveryStaffController::store',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
-// POST 用來儲存指定送餐員的修改內容
+// 修改指定送餐員
+// (:num) 代表送餐員編號，$1 會傳給 update()
 $routes->post(
     'delivery_staff/update/(:num)',
     'DeliveryStaffController::update/$1',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
-// POST 用來直接刪除指定送餐員
+// 刪除指定送餐員
+// (:num) 代表送餐員編號，$1 會傳給 delete()
 $routes->post(
     'delivery_staff/delete/(:num)',
     'DeliveryStaffController::delete/$1',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
-// 儲存指定路線的送餐員
+// 儲存指定路線的送餐員指派
+// (:num) 代表路線資料編號，$1 會傳給 assign()
 $routes->post(
     'delivery-routes/assign/(:num)',
     'DeliveryRouteController::assign/$1',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
