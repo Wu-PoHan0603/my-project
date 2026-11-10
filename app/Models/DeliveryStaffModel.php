@@ -20,6 +20,7 @@ class DeliveryStaffModel extends Model
     protected $allowedFields = [
         'staff_name',
         'phone',
+        'address',
         'is_active',
     ];
 

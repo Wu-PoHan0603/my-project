@@ -53,17 +53,37 @@ $routes->get(
     ['filter' => 'auth'] // 限制已登入的使用者才能查看
 );
 
-// 登入後才能查看送餐員列表
+// 開啟 Smarty 測試頁
+$routes->get('smarty-demo', 'SmartyDemoController::index');
+
+// 登入後才可以看到送餐員列表
 $routes->get(
-    'delivery-staff',
+    'delivery_staff',
     'DeliveryStaffController::index',
     ['filter' => 'auth']
 );
 
-// 登入後才能查看路線指派列表
+// 新增送餐員
 $routes->get(
-    'delivery-routes',
-    'DeliveryRouteController::index',
+    'delivery_staff/create',
+    'DeliveryStaffController::create',
+    ['filter' => 'auth']
+);
+
+// GET 用來查看指定送餐員的詳細資料
+// (:num) 接收網址中的送餐員編號
+// $1 將編號傳給 DeliveryStaffController::detail()
+// auth 過濾器要求使用者先登入
+$routes->get(
+    'delivery_staff/(:num)/detail',
+    'DeliveryStaffController::detail/$1',
+    ['filter' => 'auth']
+);
+
+// GET 用來開啟指定送餐員的修改表單
+$routes->get(
+    'delivery_staff/(:num)/edit',
+    'DeliveryStaffController::edit/$1',
     ['filter' => 'auth']
 );
 
@@ -130,19 +150,23 @@ $routes->post(
     ['filter' => 'auth'] // 限制已登入的使用者才能刪除
 );
 
-// 開啟 Smarty 測試頁
-$routes->get('smarty-demo', 'SmartyDemoController::index');
-
-// 登入後才能新增送餐員
+// 登入後才能新增送餐員表單
 $routes->post(
-    'delivery-staff',
+    'delivery_staff',
     'DeliveryStaffController::store',
     ['filter' => 'auth']
 );
 
-// 登入後才能修改指定路線的送餐員指派
+// POST 用來儲存指定送餐員的修改內容
 $routes->post(
-    'delivery-routes/assign/(:num)',
-    'DeliveryRouteController::assign/$1',
+    'delivery_staff/update/(:num)',
+    'DeliveryStaffController::update/$1',
+    ['filter' => 'auth']
+);
+
+// POST 用來直接刪除指定送餐員
+$routes->post(
+    'delivery_staff/delete/(:num)',
+    'DeliveryStaffController::delete/$1',
     ['filter' => 'auth']
 );

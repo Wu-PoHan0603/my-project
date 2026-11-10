@@ -30,7 +30,7 @@
                 <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
                 <!-- details 與 summary 標籤是用來製作原生摺疊面板 -->
                 <!-- 容器元素 -->
-                <details class="sidebar-menu-group" open>
+                <details class="sidebar-menu-group" >
                     <!-- 標題元素 -->
                     <summary>案主管理</summary>
 
@@ -40,7 +40,15 @@
                     </div>
                 </details>
 
-                <a href="<?= base_url('delivery_staff/index.php') ?>">送餐員資料</a>
+                <details class="sidebar-menu-group" >
+                    <!-- 標題元素 -->
+                    <summary>送餐員管理</summary>
+
+                    <div class="sidebar-submenu">
+                        <!-- 送餐員資料連結 -->
+                        <a href="<?= base_url('delivery_staff') ?>">送餐員資料</a>
+                    </div>
+                </details>
 
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>

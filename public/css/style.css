@@ -1737,3 +1737,162 @@ body {
         overflow-x: auto;
     }
 }
+
+/* 讓送餐員頁面的標題和新增按鈕水平排列 */
+.staff-page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* 避免標題在窄空間被拆成兩行 */
+.staff-page-heading h1 {
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* 列表標題靠左，新增按鈕靠右 */
+.staff-list-heading {
+    display: flex; /* 水平排列標題和按鈕 */
+    align-items: center; /* 垂直置中 */
+    justify-content: space-between; /* 分別靠左、靠右 */
+    gap: 12px; /* 保留間距 */
+}
+
+/* 避免標題被擠窄換行 */
+.staff-list-heading h2 {
+    margin: 0; /* 移除標題預設外距 */
+    white-space: nowrap; /* 保持標題在同一行 */
+}
+
+/* 標題和新增按鈕共用同一列 */
+.delivery-staff-list-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 24px 0 16px;
+}
+
+/* 標題保留文字所需寬度，不要被擠成直排 */
+.delivery-staff-list-heading h2 {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* 按鈕容器只占按鈕本身需要的寬度，避免把按鈕擠出標題列 */
+.delivery-staff-toolbar {
+    display: flex; /* 讓容器內按鈕使用彈性排版 */
+    flex: 0 0 auto; /* 不縮小按鈕容器 */
+    align-items: center; /* 按鈕垂直置中 */
+    justify-content: flex-end; /* 按鈕靠容器右側 */
+    width: auto; /* 不沿用舊規則的 100% 寬度 */
+    margin: 0; /* 移除舊規則上下外距 */
+}
+
+/* 送餐員資料表格基本樣式 */
+.delivery-staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+/* 表格標題與資料格共用邊框、間距 */
+.delivery-staff-table th,
+.delivery-staff-table td {
+    padding: 12px;
+    border: 1px solid #ccc;
+    text-align: left;
+}
+
+/* 表格標題列底色 */
+.delivery-staff-table thead th {
+    background-color: #e9ecef;
+}
+
+/* 送餐員啟用狀態的開關容器 */
+.staff-status-toggle {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+}
+
+/* 隱藏原生勾選框外觀，但保留鍵盤操作能力 */
+.staff-switch-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+/* 開關與狀態文字水平排列 */
+.staff-switch-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+/* 開關軌道 */
+.staff-switch-track {
+    display: inline-flex;
+    align-items: center;
+    width: 48px;
+    height: 26px;
+    padding: 3px;
+    border-radius: 999px;
+    background-color: #9ca3af;
+    transition: background-color 0.2s ease;
+}
+
+/* 開關圓形按鈕 */
+.staff-switch-knob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+    transition: transform 0.2s ease;
+}
+
+/* 勾選時，軌道變成綠色 */
+.staff-switch-input:checked + .staff-switch-label .staff-switch-track {
+    background-color: #198754;
+}
+
+/* 勾選時，圓形按鈕移到右側 */
+.staff-switch-input:checked + .staff-switch-label .staff-switch-knob {
+    transform: translateX(22px);
+}
+
+/* 狀態文字樣式 */
+.staff-switch-text {
+    color: #374151;
+    font-size: 14px;
+}
+
+/* 預設顯示「停用」 */
+.staff-switch-on {
+    display: none;
+}
+
+/* 啟用時顯示「啟用」，並隱藏「停用」 */
+.staff-switch-input:checked + .staff-switch-label .staff-switch-on {
+    display: inline;
+}
+
+.staff-switch-input:checked + .staff-switch-label .staff-switch-off {
+    display: none;
+}
+
+/* 使用鍵盤操作時顯示焦點外框 */
+.staff-switch-input:focus-visible + .staff-switch-label .staff-switch-track {
+    outline: 3px solid #bfdbfe;
+    outline-offset: 3px;
+}
