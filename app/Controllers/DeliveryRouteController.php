@@ -42,7 +42,7 @@ class DeliveryRouteController extends Controller
             ->findAll();
 
         // 載入路線指派畫面並傳入路線和送餐員資料
-        return view('delivery_staffs/index', [
+        return view('delivery_staffs/route', [
             'routes' => $routes,
             'staffList' => $staffList,
         ]);

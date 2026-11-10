@@ -61,9 +61,6 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                 <!-- 前往路線指派 -->
                 <a href="<?= base_url('delivery-routes') ?>">路線指派</a>
 
-                <!-- 前往路線指派頁 -->
-                <a href="<?= base_url('delivery-routes') ?>">路線指派</a>
-
                 <!-- 前往資源回收桶 -->
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
