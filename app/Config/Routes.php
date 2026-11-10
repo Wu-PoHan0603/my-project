@@ -87,9 +87,6 @@ $routes->get(
     ['filter' => 'auth']
 );
 
-// GET 用來開啟指定送餐員的路線表單
-$routes->get('delivery-routes', 'DeliveryRouteController::index');
-
 // 顯示路線指派頁
 $routes->get(
     'delivery-routes',
