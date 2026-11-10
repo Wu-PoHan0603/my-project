@@ -36,7 +36,6 @@ $errorMessage = session()->getFlashdata('error') ?? '';
 </head>
 
 <body>
-
     <!-- 整頁容器：排列左側導覽欄與主要內容 -->
     <div class="layout">
 
@@ -73,7 +72,10 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                 <a href="<?= base_url('/') ?>">首頁</a>
 
                 <!-- 麵包屑分隔符號 -->
-                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
+                <span
+                    class="page-breadcrumb-separator"
+                    aria-hidden="true"
+                >&gt;</span>
 
                 <!-- 標示目前所在頁面 -->
                 <span aria-current="page">路線指派</span>
@@ -105,7 +107,7 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                     <!-- 顯示路線與送餐員指派狀態 -->
                     <table class="delivery-staff-table">
 
-                        <!-- 表格標題列 -->
+                        <!-- 表格標題列：每筆資料對應三個欄位 -->
                         <thead>
                             <tr>
                                 <th>路線編號</th>
@@ -131,38 +133,31 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                                         <?= esc($route['staff_name'] ?? '尚未指派') ?>
                                     </td>
 
-                                    <!-- 顯示送餐員選單 -->
+                                    <!-- 操作欄：選擇送餐員並儲存指派 -->
                                     <td>
-
-                                        <!--
-                                            表單使用 POST 送出，
-                                            網址中的 route id 會交給 assign(int $id)
-                                        -->
                                         <form
                                             action="<?= base_url(
-                                                'delivery-routes/assign/' . (int) ($route['id'] ?? 0)
+                                                'delivery-routes/assign/'
+                                                . (int) ($route['id'] ?? 0)
                                             ) ?>"
                                             method="post"
+                                            class="action-buttons"
                                         >
-
                                             <!-- 產生 CSRF 欄位，供 CI4 驗證表單來源 -->
                                             <?= csrf_field() ?>
 
-                                            <!-- 送出選擇的送餐員編號 -->
+                                            <!-- 選擇要指派給這條路線的送餐員 -->
                                             <select
                                                 name="delivery_staff_id"
                                                 aria-label="選擇送餐員"
                                             >
-
                                                 <!-- 空值代表取消這條路線的指派 -->
                                                 <option value="">
                                                     尚未指派
                                                 </option>
 
-                                                <!-- 逐筆列出啟用中的送餐員 -->
+                                                <!-- 列出啟用中的送餐員 -->
                                                 <?php foreach ($staffList as $staff): ?>
-
-                                                    <!-- 送餐員選項 -->
                                                     <option
                                                         value="<?= esc(
                                                             (string) ($staff['id'] ?? ''),
@@ -175,23 +170,16 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                                                     >
                                                         <?= esc($staff['staff_name'] ?? '') ?>
                                                     </option>
-
                                                 <?php endforeach; ?>
-
                                             </select>
-                                    </td>
 
-                                    <!-- 儲存指派操作 -->
-                                    <td>
-
-                                            <!-- 送出表單，儲存這條路線的送餐員 -->
+                                            <!-- 送出表單，儲存這條路線的指派 -->
                                             <button
                                                 type="submit"
                                                 class="btn btn-primary"
                                             >
                                                 儲存指派
                                             </button>
-
                                         </form>
                                     </td>
                                 </tr>
