@@ -16,13 +16,13 @@ use CodeIgniter\Filters\SecureHeaders;
 class Filters extends BaseFilters
 {
     /**
-     * Configures aliases for Filter classes to
-     * make reading things nicer and simpler.
+     * 設定 Filter 簡稱與實際類別的對應。
+     *
+     * 例如：
+     * auth 代表 App\Filters\AuthFilter
+     * role 代表 App\Filters\RoleFilter
      *
      * @var array<string, class-string|list<class-string>>
-     *
-     * [filter_name => classname]
-     * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
         'csrf'          => CSRF::class,
@@ -34,39 +34,33 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        
-        // 將簡短名稱 auth 對應到 AuthFilter 類別
+
+        // 檢查使用者是否已登入
         'auth'          => \App\Filters\AuthFilter::class,
+
+        // 檢查使用者角色是否有權限
+        'role'          => \App\Filters\RoleFilter::class,
     ];
 
     /**
-     * List of special required filters.
-     *
-     * The filters listed here are special. They are applied before and after
-     * other kinds of filters, and always applied even if a route does not exist.
-     *
-     * Filters set by default provide framework functionality. If removed,
-     * those functions will no longer work.
-     *
-     * @see https://codeigniter.com/user_guide/incoming/filters.html#provided-filters
+     * 設定每個請求都必須執行的 Filter。
      *
      * @var array{before: list<string>, after: list<string>}
      */
     public array $required = [
         'before' => [
-            'forcehttps', // Force Global Secure Requests
-            'pagecache',  // Web Page Caching
+            'forcehttps',
+            'pagecache',
         ],
         'after' => [
-            'pagecache',   // Web Page Caching
-            'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
+            'pagecache',
+            'performance',
+            'toolbar',
         ],
     ];
 
     /**
-     * List of filter aliases that are always
-     * applied before and after every request.
+     * 設定全站執行的 Filter。
      *
      * @var array{
      *     before: array<string, array{except: list<string>|string}>|list<string>,
@@ -75,42 +69,34 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
-            // 'honeypot',
+            // 所有請求都先執行 CSRF 驗證
             'csrf',
-            // 'invalidchars',
         ],
-        'after' => [
-            // 'honeypot',
-            // 'secureheaders',
-        ],
+        'after' => [],
     ];
 
     /**
-     * List of filter aliases that works on a
-     * particular HTTP method (GET, POST, etc.).
+     * 依 HTTP 方法套用的 Filter。
      *
-     * Example:
-     * 'POST' => ['foo', 'bar']
-     *
-     * If you use this, you should disable auto-routing because auto-routing
-     * permits any HTTP method to access a controller. Accessing the controller
-     * with a method you don't expect could bypass the filter.
+     * 目前沒有使用方法層級的 Filter。
      *
      * @var array<string, list<string>>
      */
     public array $methods = [];
 
     /**
-     * List of filter aliases that should run on any
-     * before or after URI patterns.
+     * 依網址套用的 Filter。
      *
-     * Example:
-     * 'isLoggedIn' => ['before' => ['account/*', 'profiles/*']]
+     * 進入案主相關網址時，先確認使用者已登入。
      *
      * @var array<string, array<string, list<string>>>
      */
     public array $filters = [
-        // 進入 /clients 和 /clients/... 網址前，先執行 auth Filter
-        'auth' => ['before' => ['clients', 'clients/*']],
+        'auth' => [
+            'before' => [
+                'clients',
+                'clients/*',
+            ],
+        ],
     ];
 }
