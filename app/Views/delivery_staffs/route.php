@@ -58,9 +58,6 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                 <!-- 前往送餐員資料列表 -->
                 <a href="<?= base_url('delivery_staff') ?>">送餐員資料</a>
 
-                <!-- 前往路線指派 -->
-                <a href="<?= base_url('delivery-routes') ?>">路線指派</a>
-
                 <!-- 前往資源回收桶 -->
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
@@ -113,7 +110,6 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                             <tr>
                                 <th>路線編號</th>
                                 <th>目前指派送餐員</th>
-                                <th>選擇送餐員</th>
                                 <th>操作</th>
                             </tr>
                         </thead>

@@ -35,6 +35,9 @@ class DeliveryStaffController extends Controller
         // 傳入側邊欄、網址與登入者資訊
         $this->assignCommonData($smarty);
 
+        // 傳入列表中刪除表單需要的 CSRF 欄位
+        $smarty->assign('csrfField', csrf_field());
+
         // 傳入送餐員列表頁需要的資料
         $smarty->assign('staffList', $staffList);
         $smarty->assign('errors', $errors);

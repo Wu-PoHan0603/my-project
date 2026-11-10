@@ -186,13 +186,46 @@
                                         {/if}
                                     </td>
                                     <td>
-                                        {* 路線指派功能放在該筆資料的操作欄位 *}
-                                        <a
-                                            href="{$deliveryRoutesUrl}"
-                                            class="btn btn-primary"
-                                        >
-                                            路線指派
-                                        </a>
+                                        <div class="action-buttons">
+                                            {* 前往該送餐員的詳細資料 *}
+                                            <a
+                                                href="{$staffListUrl}/{$staff.id}/detail"
+                                                class="btn btn-primary"
+                                            >
+                                                詳細資料
+                                            </a>
+
+                                            {* 前往該送餐員的修改頁面 *}
+                                            <a
+                                                href="{$staffListUrl}/{$staff.id}/edit"
+                                                class="btn btn-warning"
+                                            >
+                                                修改
+                                            </a>
+
+                                            {* 路線指派 *}
+                                            <a
+                                                href="{$deliveryRoutesUrl}"
+                                                class="btn btn-primary"
+                                            >
+                                                路線指派
+                                            </a>
+
+                                            {* 刪除會修改資料，因此用 POST 表單送出 *}
+                                            <form
+                                                action="{$staffListUrl}/delete/{$staff.id}"
+                                                method="post"
+                                                class="action-form"
+                                                onsubmit="return confirm('確定要永久刪除這位送餐員嗎？')"
+                                            >
+                                                {* 輸出 CI4 產生的 CSRF 欄位 *}
+                                                {$csrfField nofilter}
+
+                                                <button type="submit" class="btn btn-danger">
+                                                    刪除
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             {/foreach}
