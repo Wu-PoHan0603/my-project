@@ -5,8 +5,9 @@ namespace App\Controllers;
 use App\Libraries\SmartyEngine;
 use App\Models\DeliveryStaffModel;
 use CodeIgniter\Controller;
+use CodeIgniter\Exceptions\PageNotFoundException;
 
-// 處理送餐員列表、新增頁面與新增資料
+// 處理送餐員列表、新增、詳細資料、修改與刪除功能
 class DeliveryStaffController extends Controller
 {
     // 顯示送餐員列表
@@ -20,14 +21,17 @@ class DeliveryStaffController extends Controller
             ->orderBy('id', 'DESC')
             ->findAll();
 
-        // 取得驗證錯誤訊息
+        // 取得欄位驗證錯誤訊息
         $errors = session()->getFlashdata('errors') ?? [];
 
         // 確保錯誤訊息是陣列
         $errors = is_array($errors) ? $errors : [];
 
-        // 取得新增成功訊息
+        // 取得成功訊息
         $successMessage = session()->getFlashdata('success') ?? '';
+
+        // 取得一般操作錯誤訊息
+        $errorMessage = session()->getFlashdata('error') ?? '';
 
         // 建立 Smarty 元件
         $smarty = new SmartyEngine();
@@ -42,6 +46,7 @@ class DeliveryStaffController extends Controller
         $smarty->assign('staffList', $staffList);
         $smarty->assign('errors', $errors);
         $smarty->assign('successMessage', $successMessage);
+        $smarty->assign('errorMessage', $errorMessage);
 
         // 執行 Smarty 模板並取得 HTML
         $html = $smarty->fetch('delivery_staff_index.tpl');
@@ -108,7 +113,7 @@ class DeliveryStaffController extends Controller
             'address' => 'permit_empty|max_length[255]',
         ];
 
-        // 設定欄位驗證失敗時顯示的中文訊息
+        // 設定驗證失敗時顯示的中文訊息
         $messages = [
             'staff_name' => [
                 'required' => '請輸入送餐員姓名。',
@@ -122,7 +127,7 @@ class DeliveryStaffController extends Controller
             ],
         ];
 
-        // 驗證失敗時回到新增頁，保留欄位內容與錯誤訊息
+        // 驗證失敗時回到新增頁，保留輸入內容和錯誤訊息
         if (! $this->validateData($data, $rules, $messages)) {
             return redirect()
                 ->to('/delivery_staff/create')
@@ -134,12 +139,157 @@ class DeliveryStaffController extends Controller
         $staffModel = new DeliveryStaffModel();
 
         // 將姓名、電話與地址寫入資料庫
-        $staffModel->insert($data);
+        if (! $staffModel->insert($data)) {
+            return redirect()
+                ->to('/delivery_staff/create')
+                ->withInput()
+                ->with('error', '送餐員新增失敗，請稍後再試。');
+        }
 
-        // 新增成功後回到列表並顯示成功訊息
+        // 新增成功後回到列表並顯示訊息
         return redirect()
             ->to('/delivery_staff')
             ->with('success', '送餐員新增成功。');
+    }
+
+    // 顯示指定送餐員的詳細資料
+    public function detail(int $id)
+    {
+        // 建立 Model，查詢指定送餐員
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($id);
+
+        // 找不到資料時顯示 404
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 載入詳細資料畫面並傳入送餐員資料
+        return view('delivery_staffs/detail', [
+            'staff' => $staff,
+        ]);
+    }
+
+    // 顯示指定送餐員的修改表單
+    public function edit(int $id)
+    {
+        // 建立 Model，查詢指定送餐員
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($id);
+
+        // 找不到資料時顯示 404
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 載入修改表單並傳入送餐員資料
+        return view('delivery_staffs/edit', [
+            'staff' => $staff,
+        ]);
+    }
+
+    // 接收並更新指定送餐員資料
+    public function update(int $id)
+    {
+        // 建立 Model，確認送餐員存在
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($id);
+
+        // 找不到資料時顯示 404
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 取得表單送來的地址
+        $postedAddress = $this->request->getPost('address');
+
+        // 整理要更新的資料；表單未送地址欄位時保留原地址
+        $data = [
+            'staff_name' => trim(
+                (string) $this->request->getPost('staff_name')
+            ),
+            'phone' => trim(
+                (string) $this->request->getPost('phone')
+            ),
+            'address' => trim(
+                (string) ($postedAddress ?? ($staff['address'] ?? ''))
+            ),
+            'is_active' => trim(
+                (string) $this->request->getPost('is_active')
+            ),
+        ];
+
+        // 設定表單驗證規則
+        $rules = [
+            'staff_name' => 'required|max_length[100]',
+            'phone' => 'permit_empty|max_length[30]',
+            'address' => 'permit_empty|max_length[255]',
+            'is_active' => 'required|in_list[0,1]',
+        ];
+
+        // 設定驗證失敗時顯示的中文訊息
+        $messages = [
+            'staff_name' => [
+                'required' => '請輸入送餐員姓名。',
+                'max_length' => '姓名不可超過 100 個字。',
+            ],
+            'phone' => [
+                'max_length' => '電話不可超過 30 個字。',
+            ],
+            'address' => [
+                'max_length' => '地址不可超過 255 個字。',
+            ],
+            'is_active' => [
+                'required' => '請選擇送餐員啟用狀態。',
+                'in_list' => '送餐員啟用狀態資料不正確。',
+            ],
+        ];
+
+        // 驗證失敗時返回修改頁，保留輸入內容和錯誤訊息
+        if (! $this->validateData($data, $rules, $messages)) {
+            return redirect()
+                ->to('/delivery_staff/' . $id . '/edit')
+                ->withInput()
+                ->with('errors', $this->validator->getErrors());
+        }
+
+        // 更新資料庫中的送餐員資料
+        if (! $staffModel->update($id, $data)) {
+            return redirect()
+                ->to('/delivery_staff/' . $id . '/edit')
+                ->withInput()
+                ->with('error', '送餐員資料更新失敗。');
+        }
+
+        // 更新成功後回到列表
+        return redirect()
+            ->to('/delivery_staff')
+            ->with('success', '送餐員資料更新成功。');
+    }
+
+    // 永久刪除指定送餐員
+    public function delete(int $id)
+    {
+        // 建立 Model，確認送餐員存在
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($id);
+
+        // 找不到資料時顯示 404
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 刪除資料；路線表的外鍵設定會將相關指派清空
+        if (! $staffModel->delete($id)) {
+            return redirect()
+                ->to('/delivery_staff')
+                ->with('error', '送餐員刪除失敗。');
+        }
+
+        // 刪除成功後回到列表
+        return redirect()
+            ->to('/delivery_staff')
+            ->with('success', '送餐員已刪除。');
     }
 
     // 將共用資料交給 Smarty 模板
@@ -158,7 +308,7 @@ class DeliveryStaffController extends Controller
         $smarty->assign('changePasswordUrl', base_url('change-password'));
         $smarty->assign('logoutUrl', base_url('logout'));
 
-        // 取得登入帳號；沒有帳號時使用提示文字
+        // 取得登入帳號；沒有帳號時顯示提示文字
         $currentUsername = session()->get('username') ?? '未取得帳號';
 
         // 取得顯示名稱；沒有設定時使用登入帳號
