@@ -151,7 +151,7 @@
                 <div class="delivery-staff-list-heading">
                     <h2>送餐員資料列表</h2>
 
-                    //新增送餐員
+                    {* 新增送餐員 *}
                     <a href="{$createStaffUrl}" class="btn btn-danger">
                     新增送餐員
                     </a>
@@ -164,6 +164,7 @@
                                 <th>編號</th>
                                 <th>送餐員姓名</th>
                                 <th>聯絡電話</th>
+                                <th>地址</th>
                                 <th>狀態</th>
                                 <th>操作</th>
                             </tr>
@@ -176,6 +177,7 @@
                                     <td>{$staff.id}</td>
                                     <td>{$staff.staff_name}</td>
                                     <td>{$staff.phone|default:''}</td>
+                                    <td>{$staff.address|default:''}</td>
                                     <td>
                                         {if $staff.is_active == 1}
                                             啟用

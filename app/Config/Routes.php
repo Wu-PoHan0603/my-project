@@ -87,6 +87,16 @@ $routes->get(
     ['filter' => 'auth']
 );
 
+// GET 用來開啟指定送餐員的路線表單
+$routes->get('delivery-routes', 'DeliveryRouteController::index');
+
+// 顯示路線指派頁
+$routes->get(
+    'delivery-routes',
+    'DeliveryRouteController::index',
+    ['filter' => 'auth']
+);
+
 
 // post 操作
 // 對應網址：POST clients
@@ -168,5 +178,12 @@ $routes->post(
 $routes->post(
     'delivery_staff/delete/(:num)',
     'DeliveryStaffController::delete/$1',
+    ['filter' => 'auth']
+);
+
+// 儲存指定路線的送餐員
+$routes->post(
+    'delivery-routes/assign/(:num)',
+    'DeliveryRouteController::assign/$1',
     ['filter' => 'auth']
 );
