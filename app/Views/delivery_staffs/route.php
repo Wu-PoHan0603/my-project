@@ -18,6 +18,16 @@ $successMessage = session()->getFlashdata('success') ?? '';
 // 取得指派錯誤訊息；沒有訊息時使用空字串
 $errorMessage = session()->getFlashdata('error') ?? '';
 
+// 取得目前登入者角色
+$currentRole = session()->get('role') ?? '';
+
+// 只有管理員與工作人員可以操作路線指派
+$canManageRoutes = in_array(
+    $currentRole,
+    ['admin', 'staff'],
+    true
+);
+
 ?>
 
 <!DOCTYPE html>
@@ -133,54 +143,55 @@ $errorMessage = session()->getFlashdata('error') ?? '';
                                         <?= esc($route['staff_name'] ?? '尚未指派') ?>
                                     </td>
 
-                                    <!-- 操作欄：選擇送餐員並儲存指派 -->
+                                    <!-- 操作欄：管理者可指派送餐員，唯讀者只會看到提示 -->
                                     <td>
-                                        <form
-                                            action="<?= base_url(
-                                                'delivery-routes/assign/'
-                                                . (int) ($route['id'] ?? 0)
-                                            ) ?>"
-                                            method="post"
-                                            class="action-buttons"
-                                        >
-                                            <!-- 產生 CSRF 欄位，供 CI4 驗證表單來源 -->
-                                            <?= csrf_field() ?>
-
-                                            <!-- 選擇要指派給這條路線的送餐員 -->
-                                            <select
-                                                name="delivery_staff_id"
-                                                aria-label="選擇送餐員"
+                                        <?php if ($canManageRoutes): ?>
+                                            <!-- 使用 POST 儲存指派，網址中的路線編號會傳給 assign() -->
+                                            <form
+                                                action="<?= base_url(
+                                                    'delivery-routes/assign/'
+                                                    . (int) ($route['id'] ?? 0)
+                                                ) ?>"
+                                                method="post"
+                                                class="action-buttons"
                                             >
-                                                <!-- 空值代表取消這條路線的指派 -->
-                                                <option value="">
-                                                    尚未指派
-                                                </option>
+                                                <!-- 產生 CSRF 欄位，供 CI4 驗證表單來源 -->
+                                                <?= csrf_field() ?>
 
-                                                <!-- 列出啟用中的送餐員 -->
-                                                <?php foreach ($staffList as $staff): ?>
-                                                    <option
-                                                        value="<?= esc(
-                                                            (string) ($staff['id'] ?? ''),
-                                                            'attr'
-                                                        ) ?>"
-                                                        <?= (int) ($route['delivery_staff_id'] ?? 0)
-                                                            === (int) ($staff['id'] ?? 0)
-                                                            ? 'selected'
-                                                            : '' ?>
-                                                    >
-                                                        <?= esc($staff['staff_name'] ?? '') ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                                <!-- 選擇要指派給這條路線的送餐員 -->
+                                                <select
+                                                    name="delivery_staff_id"
+                                                    aria-label="選擇送餐員"
+                                                >
+                                                    <!-- 空值代表取消這條路線的指派 -->
+                                                    <option value="">尚未指派</option>
 
-                                            <!-- 送出表單，儲存這條路線的指派 -->
-                                            <button
-                                                type="submit"
-                                                class="btn btn-primary"
-                                            >
-                                                儲存指派
-                                            </button>
-                                        </form>
+                                                    <!-- 列出啟用中的送餐員 -->
+                                                    <?php foreach ($staffList as $staff): ?>
+                                                        <option
+                                                            value="<?= esc(
+                                                                (string) ($staff['id'] ?? ''),
+                                                                'attr'
+                                                            ) ?>"
+                                                            <?= (int) ($route['delivery_staff_id'] ?? 0)
+                                                                === (int) ($staff['id'] ?? 0)
+                                                                ? 'selected'
+                                                                : '' ?>
+                                                        >
+                                                            <?= esc($staff['staff_name'] ?? '') ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+
+                                                <!-- 儲存這條路線的送餐員指派 -->
+                                                <button type="submit" class="btn btn-primary">
+                                                    儲存指派
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <!-- 唯讀使用者只查看目前指派狀態 -->
+                                            <span>僅供查看</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

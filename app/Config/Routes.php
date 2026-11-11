@@ -94,6 +94,13 @@ $routes->get(
     ['filter' => 'auth']
 );
 
+// 顯示案主 Excel 匯入頁；限已登入的管理員或工作人員使用
+$routes->get(
+    'clients/import',
+    'ClientController::import',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
 
 // POST 操作：會新增、修改或刪除資料的請求
 
@@ -221,5 +228,12 @@ $routes->post(
 $routes->post(
     'delivery-routes/assign/(:num)',
     'DeliveryRouteController::assign/$1',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
+// 接收 Excel 檔案並產生資料預覽；限已登入的管理員或工作人員使用
+$routes->post(
+    'clients/import/preview',
+    'ClientController::previewImport',
     ['filter' => ['auth', 'role:admin,staff']]
 );
