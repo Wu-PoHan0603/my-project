@@ -12,6 +12,12 @@ use App\Models\ClientProfileModel;
 // 引用案主附件 Model
 use App\Models\ClientAttachmentModel;
 
+use App\Libraries\SmartyEngine;
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+use Throwable;
+
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ClientController extends BaseController
@@ -1026,5 +1032,245 @@ class ClientController extends BaseController
             ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('Cache-Control', 'private, no-store')
             ->setBody((string) file_get_contents($filePath));
+    }
+
+    // 使用 Smarty 顯示案主 Excel 匯入頁
+    public function import()
+    {
+        // 建立 Smarty 元件
+        $smarty = new SmartyEngine();
+
+        // 傳入頁面需要的網址
+        $smarty->assign('cssUrl', base_url('css/style.css'));
+        $smarty->assign('homeUrl', base_url('/'));
+        $smarty->assign('clientListUrl', base_url('clients'));
+        $smarty->assign('staffListUrl', base_url('delivery_staff'));
+        $smarty->assign('trashUrl', base_url('clients/trash'));
+        $smarty->assign('changePasswordUrl', base_url('change-password'));
+        $smarty->assign('logoutUrl', base_url('logout'));
+        $smarty->assign('importPreviewUrl', base_url('clients/import/preview'));
+
+        // 傳入上傳表單需要的 CSRF 欄位
+        $smarty->assign('csrfField', csrf_field());
+
+        // 取得登入者帳號
+        $currentUsername = session()->get('username') ?? '未取得帳號';
+
+        // 取得顯示名稱；沒有設定時以登入帳號代替
+        $currentDisplayName = session()->get('display_name')
+            ?: $currentUsername;
+
+        // 將角色代碼轉成中文名稱
+        $roleLabels = [
+            'admin'  => '系統管理員',
+            'staff'  => '工作人員',
+            'viewer' => '唯讀使用者',
+        ];
+
+        // 取得目前角色及角色中文名稱
+        $currentRole = session()->get('role') ?? '';
+        $currentRoleLabel = $roleLabels[$currentRole] ?? '未設定角色';
+
+        // 傳入側欄顯示的登入者資訊
+        $smarty->assign('currentUsername', $currentUsername);
+        $smarty->assign('currentDisplayName', $currentDisplayName);
+        $smarty->assign('currentRoleLabel', $currentRoleLabel);
+
+        // 傳入登出表單需要的 CSRF 欄位
+        $smarty->assign('logoutCsrfField', csrf_field());
+
+        // 取得一次性錯誤訊息
+        $errorMessage = session()->getFlashdata('error') ?? '';
+        $smarty->assign('errorMessage', $errorMessage);
+
+        // 執行 Smarty 模板並取得 HTML
+        $html = $smarty->fetch('clients_import.tpl');
+
+        // 回傳 UTF-8 HTML 頁面
+        return $this->response
+            ->setContentType('text/html', 'UTF-8')
+            ->setBody($html);
+    }
+
+    // 接收 Excel 檔案、檢查欄位並顯示資料預覽
+    public function previewImport()
+    {
+        // 取得表單上傳的 Excel 檔案
+        $file = $this->request->getFile('excel_file');
+
+        // 確認使用者有選擇檔案，而且上傳過程沒有錯誤
+        if ($file === null || ! $file->isValid()) {
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', '請選擇有效的 Excel 檔案。');
+        }
+
+        // 取得副檔名並轉成小寫
+        $extension = strtolower($file->getExtension());
+
+        // 目前只接受 .xlsx 和 .xls 格式
+        if (! in_array($extension, ['xlsx', 'xls'], true)) {
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', '檔案格式不正確，請使用 .xlsx 或 .xls 檔案。');
+        }
+
+        // 限制檔案大小為 5 MB
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', '檔案大小不可超過 5 MB。');
+        }
+
+        try {
+            // 使用 PhpSpreadsheet 讀取上傳檔案的暫存路徑
+            $spreadsheet = IOFactory::load($file->getTempName());
+
+            // 取得目前工作表
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // 將工作表內容轉成陣列
+            // true 代表讀取格式化後的顯示值
+            // 第四個 true 代表使用 Excel 欄位字母作為陣列索引
+            $sheetRows = $sheet->toArray(null, true, true, true);
+
+            // 確認工作表至少有標題列
+            if (empty($sheetRows)) {
+                return redirect()
+                    ->to('/clients/import')
+                    ->with('error', 'Excel 工作表沒有資料。');
+            }
+
+            // 移除第一列並作為欄位標題
+            $headerRow = array_shift($sheetRows);
+
+            // 建立「欄位名稱 → Excel 欄位字母」對照表
+            $headerMap = [];
+
+            foreach ($headerRow as $columnLetter => $headerValue) {
+                // 清除標題前後空白，並統一轉成小寫
+                $header = strtolower(trim((string) $headerValue));
+
+                // 移除可能出現在第一個標題前的 UTF-8 BOM
+                $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
+
+                // 忽略空白標題
+                if ($header !== '') {
+                    $headerMap[$header] = $columnLetter;
+                }
+            }
+
+            // 匯入案主基本資料所需的必要欄位
+            $requiredHeaders = [
+                'ct_name',
+                'ct_addr',
+                'route_no',
+            ];
+
+            // 找出 Excel 中缺少的必要欄位
+            $missingHeaders = array_diff(
+                $requiredHeaders,
+                array_keys($headerMap)
+            );
+
+            // 缺少必要欄位時返回匯入頁並提示欄位名稱
+            if (! empty($missingHeaders)) {
+                return redirect()
+                    ->to('/clients/import')
+                    ->with(
+                        'error',
+                        'Excel 缺少必要欄位：'
+                            . implode(', ', $missingHeaders)
+                    );
+            }
+
+            // 準備預覽資料、錯誤資料與資料筆數
+            $previewRows = [];
+            $totalRows = 0;
+
+            // 從第二列開始逐筆讀取案主資料
+            foreach ($sheetRows as $rowNumber => $row) {
+                // 依照標題對照表讀取案主姓名
+                $clientName = trim(
+                    (string) ($row[$headerMap['ct_name']] ?? '')
+                );
+
+                // 依照標題對照表讀取案主地址
+                $clientAddress = trim(
+                    (string) ($row[$headerMap['ct_addr']] ?? '')
+                );
+
+                // 依照標題對照表讀取路線編號
+                $routeNumber = trim(
+                    (string) ($row[$headerMap['route_no']] ?? '')
+                );
+
+                // 三個必要欄位都空白時，略過這一列
+                if (
+                    $clientName === ''
+                    && $clientAddress === ''
+                    && $routeNumber === ''
+                ) {
+                    continue;
+                }
+
+                // 計算實際 Excel 列號；標題列是第 1 列
+                $excelRowNumber = (int) $rowNumber + 2;
+
+                // 檢查必要欄位是否有填寫
+                $rowErrors = [];
+
+                if ($clientName === '') {
+                    $rowErrors[] = '缺少案主姓名';
+                }
+
+                if ($clientAddress === '') {
+                    $rowErrors[] = '缺少案主地址';
+                }
+
+                if ($routeNumber === '') {
+                    $rowErrors[] = '缺少路線編號';
+                }
+
+                // 將資料加入預覽清單
+                $previewRows[] = [
+                    'rowNumber' => $excelRowNumber,
+                    'ct_name' => $clientName,
+                    'ct_addr' => $clientAddress,
+                    'route_no' => $routeNumber,
+                    'errorText' => implode('、', $rowErrors),
+                ];
+
+                // 累計非空白資料列數
+                $totalRows++;
+            }
+
+            // 建立 Smarty 元件
+            $smarty = new SmartyEngine();
+
+            // 傳入頁面使用的共用網址
+            $smarty->assign('cssUrl', base_url('css/style.css'));
+            $smarty->assign('homeUrl', base_url('/'));
+            $smarty->assign('clientListUrl', base_url('clients'));
+            $smarty->assign('importUrl', base_url('clients/import'));
+
+            // 傳入 Excel 預覽資料
+            $smarty->assign('fileName', $file->getClientName());
+            $smarty->assign('previewRows', $previewRows);
+            $smarty->assign('totalRows', $totalRows);
+
+            // 執行 Smarty 預覽模板並取得 HTML
+            $html = $smarty->fetch('clients_import_preview.tpl');
+
+            // 回傳 UTF-8 HTML 頁面
+            return $this->response
+                ->setContentType('text/html', 'UTF-8')
+                ->setBody($html);
+        } catch (Throwable $exception) {
+            // 讀取失敗時返回匯入頁，不顯示系統內部錯誤細節
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', 'Excel 檔案讀取失敗，請確認檔案內容與格式。');
+        }
     }
 }
