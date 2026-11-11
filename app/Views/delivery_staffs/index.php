@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 以下變數由 ClientController::index() 傳入。
  *

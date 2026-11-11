@@ -19,17 +19,25 @@
         <aside class="sidebar">
             <h2>案主管理系統</h2>
 
-            <nav>
-                {* 回到首頁 *}
+            <nav aria-label="主要導覽">
                 <a href="{$homeUrl}">首頁</a>
 
-                {* 前往案主資料列表 *}
-                <a href="{$clientListUrl}">案主資料</a>
+                {* 案主管理選單；匯入頁載入時展開 *}
+                <details class="sidebar-menu-group" open>
+                    <summary>案主管理</summary>
+                    <div class="sidebar-submenu">
+                        <a href="{$clientListUrl}">案主資料</a>
+                    </div>
+                </details>
 
-                {* 前往送餐員資料列表 *}
-                <a href="{$staffListUrl}">送餐員資料</a>
+                {* 送餐員管理選單 *}
+                <details class="sidebar-menu-group">
+                    <summary>送餐員管理</summary>
+                    <div class="sidebar-submenu">
+                        <a href="{$staffListUrl}">送餐員資料</a>
+                    </div>
+                </details>
 
-                {* 前往資源回收桶 *}
                 <a href="{$trashUrl}">資源回收桶</a>
             </nav>
 
@@ -94,22 +102,23 @@
         {* 右側主要內容 *}
         <main class="content">
 
-            {* 顯示頁面所在位置 *}
-            <nav class="page-breadcrumb" aria-label="麵包屑導覽">
-                <a href="{$homeUrl}">首頁</a>
+        {* 顯示目前頁面的導覽路徑 *}
+        <nav class="page-breadcrumb" aria-label="麵包屑導覽">
+            {* 回到系統首頁 *}
+            <a href="{$homeUrl}">首頁</a>
 
-                <span class="page-breadcrumb-separator" aria-hidden="true">
-                    &gt;
-                </span>
+            {* 路徑分隔符號 *}
+            <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
 
-                <a href="{$clientListUrl}">案主資料</a>
+            {* 回到案主管理列表 *}
+            <a href="{$clientListUrl}">案主資料</a>
 
-                <span class="page-breadcrumb-separator" aria-hidden="true">
-                    &gt;
-                </span>
+            {* 路徑分隔符號 *}
+            <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
 
-                <span aria-current="page">匯入 Excel</span>
-            </nav>
+            {* 標示目前所在頁面 *}
+            <span aria-current="page">匯入 Excel</span>
+        </nav>
 
             {* 頁面標題 *}
             <h1>匯入案主 Excel</h1>

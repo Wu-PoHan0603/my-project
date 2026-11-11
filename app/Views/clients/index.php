@@ -41,11 +41,6 @@ $canManageClients = in_array(
                     <div class="sidebar-submenu">
                         <!-- 前往案主列表 -->
                         <a href="<?= base_url('clients') ?>">案主資料</a>
-
-                        <!-- 管理角色可以開啟 Excel 匯入頁 -->
-                        <?php if ($canManageClients): ?>
-                            <a href="<?= base_url('clients/import') ?>">匯入 Excel</a>
-                        <?php endif; ?>
                     </div>
                 </details>
 

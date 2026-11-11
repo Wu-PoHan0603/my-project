@@ -19,23 +19,30 @@
         <aside class="sidebar">
             <h2>案主管理系統</h2>
 
-            <nav>
-                {* 回到首頁 *}
+            {* 系統主要導覽選單 *}
+            <nav aria-label="主要導覽">
+                {* 前往首頁 *}
                 <a href="{$homeUrl}">首頁</a>
 
-                {* 可展開或收合案主管理選單 *}
+                {* 案主管理選單 *}
                 <details class="sidebar-menu-group">
                     <summary>案主管理</summary>
                     <div class="sidebar-submenu">
                         <a href="{$clientListUrl}">案主資料</a>
+
+                        {* 管理員與工作人員可以使用 Excel 匯入 *}
+                        {if $canManageStaff}
+                            <a href="{$clientImportUrl}">匯入 Excel</a>
+                        {/if}
                     </div>
                 </details>
 
-                {* 目前所在的送餐員管理選單預設展開 *}
+                {* 送餐員管理選單；目前頁面載入時展開 *}
                 <details class="sidebar-menu-group" open>
                     <summary>送餐員管理</summary>
                     <div class="sidebar-submenu">
                         <a href="{$staffListUrl}">送餐員資料</a>
+                        <a href="{$deliveryRoutesUrl}">路線指派</a>
                     </div>
                 </details>
 
@@ -106,20 +113,15 @@
         <main class="content">
 
             {* 麵包屑導覽 *}
+            {* 顯示目前頁面的導覽路徑 *}
             <nav class="page-breadcrumb" aria-label="麵包屑導覽">
                 <a href="{$homeUrl}">首頁</a>
 
-                <span
-                    class="page-breadcrumb-separator"
-                    aria-hidden="true"
-                >&gt;</span>
+                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
 
                 <span>送餐員管理</span>
 
-                <span
-                    class="page-breadcrumb-separator"
-                    aria-hidden="true"
-                >&gt;</span>
+                <span class="page-breadcrumb-separator" aria-hidden="true">&gt;</span>
 
                 <span aria-current="page">送餐員資料</span>
             </nav>
