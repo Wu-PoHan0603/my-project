@@ -101,6 +101,13 @@ $routes->get(
     ['filter' => ['auth', 'role:admin,staff']]
 );
 
+// 匯出現有案主資料為 Excel；限已登入的管理員或工作人員使用
+$routes->get(
+    'clients/export',
+    'ClientController::export',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
 
 // POST 操作：會新增、修改或刪除資料的請求
 

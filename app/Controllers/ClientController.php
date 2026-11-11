@@ -16,6 +16,15 @@ use App\Libraries\SmartyEngine;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
+// 建立 Excel 活頁簿
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+
+// 將活頁簿輸出為 .xlsx 檔案
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+// 明確設定儲存格為文字，避免姓名、電話等資料被 Excel 改格式
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+
 use Throwable;
 
 use CodeIgniter\HTTP\ResponseInterface;
@@ -1032,6 +1041,167 @@ class ClientController extends BaseController
             ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('Cache-Control', 'private, no-store')
             ->setBody((string) file_get_contents($filePath));
+    }
+
+    // 匯出現有案主基本資料與詳細資料為 Excel
+    public function export()
+    {
+        // 取得資料庫連線
+        $db = \Config\Database::connect();
+
+        // 設定 Excel 欄位順序
+        // s_num 對應 clients.id，作為回傳上傳時辨認案主的依據
+        $columns = [
+            's_num',
+            'ct_name',
+            'ct_addr',
+            'route_no',
+            'region',
+            'national_id',
+            'sex',
+            'birthday',
+            'mobile',
+            'home_phone',
+            'contact_person_1',
+            'contact_person_2',
+            'case_manager',
+            'care_specialist',
+            'home_service',
+            'registered_address',
+            'longitude',
+            'latitude',
+            'checkin_distance',
+            'meal_box_price',
+            'remittance_suffix',
+            'only_ot_case',
+            'living_status',
+            'identity_type',
+            'disability_status',
+            'health_status',
+            'disability_level',
+            'disease_names',
+            'care_level',
+            'assessment_summary',
+            'treatment_plan_summary',
+            'is_active',
+        ];
+
+        // 指定要匯出的資料欄位
+        // b_date、e_date、d_date 是系統時間欄位，不放進可修改的 Excel
+        $selectFields = [
+            'c.id AS s_num',
+            'c.ct_name',
+            'c.ct_addr',
+            'c.route_no',
+            'cp.region',
+            'cp.national_id',
+            'cp.sex',
+            'cp.birthday',
+            'cp.mobile',
+            'cp.home_phone',
+            'cp.contact_person_1',
+            'cp.contact_person_2',
+            'cp.case_manager',
+            'cp.care_specialist',
+            'cp.home_service',
+            'cp.registered_address',
+            'cp.longitude',
+            'cp.latitude',
+            'cp.checkin_distance',
+            'cp.meal_box_price',
+            'cp.remittance_suffix',
+            'cp.only_ot_case',
+            'cp.living_status',
+            'cp.identity_type',
+            'cp.disability_status',
+            'cp.health_status',
+            'cp.disability_level',
+            'cp.disease_names',
+            'cp.care_level',
+            'cp.assessment_summary',
+            'cp.treatment_plan_summary',
+            'cp.is_active',
+        ];
+
+        // 查詢未被軟刪除的案主，並合併其詳細資料
+        $rows = $db->table('clients c')
+            ->select($selectFields)
+            ->join(
+                'client_profiles cp',
+                'cp.client_id = c.id',
+                'left'
+            )
+            ->where('c.d_date', null)
+            ->orderBy('c.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // 建立新的 Excel 活頁簿
+        $spreadsheet = new Spreadsheet();
+
+        // 取得第一個工作表並命名
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('案主資料');
+
+        // 將資料庫欄位名稱放在第一列，供後續匯入程式辨認
+        foreach ($columns as $index => $columnName) {
+            $cell = $sheet->getCell([$index + 1, 1]);
+            $cell->setValueExplicit($columnName, DataType::TYPE_STRING);
+        }
+
+        // 從第二列開始輸出案主資料
+        foreach ($rows as $rowIndex => $row) {
+            // Excel 第 1 列是標題，因此資料從第 2 列開始
+            $excelRow = $rowIndex + 2;
+
+            // 依照欄位順序逐格輸出資料
+            foreach ($columns as $columnIndex => $columnName) {
+                // null 欄位以空字串輸出
+                $value = $row[$columnName] ?? '';
+
+                // 所有內容先以文字輸出，保留編號、電話尾碼與日期格式
+                $sheet
+                    ->getCell([$columnIndex + 1, $excelRow])
+                    ->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            }
+        }
+
+        // 凍結標題列，向下捲動時仍看得到欄位名稱
+        $sheet->freezePane('A2');
+
+        // 開啟標題列篩選功能
+        $lastColumn = $sheet->getHighestColumn();
+        $lastRow = max(1, $sheet->getHighestRow());
+        $sheet->setAutoFilter('A1:' . $lastColumn . $lastRow);
+
+        // 設定標題列樣式
+        $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $lastColumn . '1')
+            ->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+        $sheet->getStyle('A1:' . $lastColumn . '1')
+            ->getFill()
+            ->getStartColor()
+            ->setARGB('FFD9EAF7');
+
+        // 自動調整欄寬，方便檢視資料
+        foreach (range('A', $lastColumn) as $columnLetter) {
+            $sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+        }
+
+        // 建立 Excel 寫入器
+        $writer = new Xlsx($spreadsheet);
+
+        // 暫存 Excel 二進位內容
+        ob_start();
+        $writer->save('php://output');
+        $excelContent = ob_get_clean();
+
+        // 設定下載檔名
+        $fileName = '案主資料_' . date('Ymd_His') . '.xlsx';
+
+        // 回傳 Excel 檔案下載
+        return $this->response->download($fileName, $excelContent);
     }
 
     // 使用 Smarty 顯示案主 Excel 匯入頁

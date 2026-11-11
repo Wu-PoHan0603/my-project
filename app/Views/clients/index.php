@@ -189,8 +189,33 @@
                     <h2>案主資料列表</h2>
 
                     <div class="client-table-toolbar">
-                        <!-- 前往新增案主頁；沿用目前 CSS 的紅色按鈕樣式 -->
-                        <a href="<?= base_url('clients/create') ?>" class="btn btn-danger">新增案主</a>
+
+                        <?php
+                        // 匯出檔案包含案主資料，只讓管理員與工作人員看到下載按鈕
+                        $canExportClients = in_array(
+                            session()->get('role'),
+                            ['admin', 'staff'],
+                            true
+                        );
+                        ?>
+
+                        <?php if ($canExportClients): ?>
+                            <!-- 前往受權限保護的案主 Excel 匯出網址 -->
+                            <a
+                                href="<?= base_url('clients/export') ?>"
+                                class="btn btn-primary"
+                            >
+                                匯出案主 Excel
+                            </a>
+                        <?php endif; ?>
+
+                        <!-- 前往新增案主頁面 -->
+                        <a
+                            href="<?= base_url('clients/create') ?>"
+                            class="btn btn-danger"
+                        >
+                            新增案主
+                        </a>
                     </div>
                 </div>
             </div>
