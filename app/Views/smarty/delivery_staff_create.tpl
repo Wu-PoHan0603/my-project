@@ -21,11 +21,6 @@
                     <summary>案主管理</summary>
                     <div class="sidebar-submenu">
                         <a href="{$clientListUrl}">案主資料</a>
-
-                        {* 管理員與工作人員可以使用 Excel 匯入 *}
-                        {if $canManageStaff}
-                            <a href="{$clientImportUrl}">匯入 Excel</a>
-                        {/if}
                     </div>
                 </details>
 
@@ -34,7 +29,6 @@
                     <summary>送餐員管理</summary>
                     <div class="sidebar-submenu">
                         <a href="{$staffListUrl}">送餐員資料</a>
-                        <a href="{$deliveryRoutesUrl}">路線指派</a>
                     </div>
                 </details>
 
