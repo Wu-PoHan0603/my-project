@@ -244,3 +244,10 @@ $routes->post(
     'ClientController::previewImport',
     ['filter' => ['auth', 'role:admin,staff']]
 );
+
+// 使用者確認預覽資料後，才更新案主資料
+$routes->post(
+    'clients/import/confirm',
+    'ClientController::confirmImport',
+    ['filter' => ['auth', 'role:admin,staff']]
+);

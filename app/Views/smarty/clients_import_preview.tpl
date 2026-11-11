@@ -85,6 +85,27 @@
                 <a href="{$importUrl}" class="btn btn-secondary">
                     返回重新選擇
                 </a>
+
+                {* 只有全部資料都通過檢查時，才顯示確認匯入按鈕 *}
+                {if !$hasErrors}
+                    <form
+                        action="{$confirmImportUrl}"
+                        method="post"
+                        class="action-form"
+                        onsubmit="return confirm('確定要更新這些案主資料嗎？')"
+                    >
+                        {* 輸出 CI4 產生的 CSRF 欄位 *}
+                        {$csrfField nofilter}
+
+                        <button type="submit" class="btn btn-primary">
+                            確認匯入並更新
+                        </button>
+                    </form>
+                {else}
+                    <p class="message-error">
+                        資料有錯誤，請返回修改 Excel 後重新上傳。
+                    </p>
+                {/if}
             </section>
         </main>
     </div>

@@ -1262,30 +1262,31 @@ class ClientController extends BaseController
             ->setBody($html);
     }
 
-    // 接收 Excel 檔案、檢查欄位並顯示資料預覽
+    // 接收匯出的案主 Excel，檢查資料並建立預覽
     public function previewImport()
     {
-        // 取得表單上傳的 Excel 檔案
+        // 取得上傳表單中的 Excel 檔案
         $file = $this->request->getFile('excel_file');
 
-        // 確認使用者有選擇檔案，而且上傳過程沒有錯誤
-        if ($file === null || ! $file->isValid()) {
+        // 確認檔案存在、上傳成功且尚未被移動
+        if (
+            $file === null
+            || ! $file->isValid()
+            || $file->hasMoved()
+        ) {
             return redirect()
                 ->to('/clients/import')
                 ->with('error', '請選擇有效的 Excel 檔案。');
         }
 
-        // 取得副檔名並轉成小寫
-        $extension = strtolower($file->getExtension());
-
-        // 目前只接受 .xlsx 和 .xls 格式
-        if (! in_array($extension, ['xlsx', 'xls'], true)) {
+        // 只接受由系統匯出的 .xlsx 檔案
+        if (strtolower($file->getExtension()) !== 'xlsx') {
             return redirect()
                 ->to('/clients/import')
-                ->with('error', '檔案格式不正確，請使用 .xlsx 或 .xls 檔案。');
+                ->with('error', '請上傳系統匯出的 .xlsx 檔案。');
         }
 
-        // 限制檔案大小為 5 MB
+        // 限制上傳檔案大小為 5 MB
         if ($file->getSize() > 5 * 1024 * 1024) {
             return redirect()
                 ->to('/clients/import')
@@ -1293,154 +1294,506 @@ class ClientController extends BaseController
         }
 
         try {
-            // 使用 PhpSpreadsheet 讀取上傳檔案的暫存路徑
+            // 從上傳暫存位置讀取 Excel
             $spreadsheet = IOFactory::load($file->getTempName());
 
             // 取得目前工作表
             $sheet = $spreadsheet->getActiveSheet();
 
-            // 將工作表內容轉成陣列
-            // true 代表讀取格式化後的顯示值
-            // 第四個 true 代表使用 Excel 欄位字母作為陣列索引
+            // 將工作表內容轉成陣列；第四個 true 會用欄位字母作為索引
             $sheetRows = $sheet->toArray(null, true, true, true);
 
-            // 確認工作表至少有標題列
+            // 檢查工作表是否有資料
             if (empty($sheetRows)) {
                 return redirect()
                     ->to('/clients/import')
                     ->with('error', 'Excel 工作表沒有資料。');
             }
 
-            // 移除第一列並作為欄位標題
+            // 取出第一列，作為欄位標題
             $headerRow = array_shift($sheetRows);
+
+            // 列出系統匯出的所有欄位
+            // 必須完整保留欄位名稱，避免漏掉資料造成原資料被清空
+            $expectedHeaders = [
+                's_num',
+                'ct_name',
+                'ct_addr',
+                'route_no',
+                'region',
+                'national_id',
+                'sex',
+                'birthday',
+                'mobile',
+                'home_phone',
+                'contact_person_1',
+                'contact_person_2',
+                'case_manager',
+                'care_specialist',
+                'home_service',
+                'registered_address',
+                'longitude',
+                'latitude',
+                'checkin_distance',
+                'meal_box_price',
+                'remittance_suffix',
+                'only_ot_case',
+                'living_status',
+                'identity_type',
+                'disability_status',
+                'health_status',
+                'disability_level',
+                'disease_names',
+                'care_level',
+                'assessment_summary',
+                'treatment_plan_summary',
+                'is_active',
+            ];
 
             // 建立「欄位名稱 → Excel 欄位字母」對照表
             $headerMap = [];
 
             foreach ($headerRow as $columnLetter => $headerValue) {
-                // 清除標題前後空白，並統一轉成小寫
+                // 去除標題前後空白並轉成小寫
                 $header = strtolower(trim((string) $headerValue));
 
                 // 移除可能出現在第一個標題前的 UTF-8 BOM
                 $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
 
-                // 忽略空白標題
+                // 只記錄有名稱的欄位
                 if ($header !== '') {
                     $headerMap[$header] = $columnLetter;
                 }
             }
 
-            // 匯入案主基本資料所需的必要欄位
-            $requiredHeaders = [
-                'ct_name',
-                'ct_addr',
-                'route_no',
-            ];
-
-            // 找出 Excel 中缺少的必要欄位
+            // 確認 Excel 沒有缺少系統欄位
             $missingHeaders = array_diff(
-                $requiredHeaders,
+                $expectedHeaders,
                 array_keys($headerMap)
             );
 
-            // 缺少必要欄位時返回匯入頁並提示欄位名稱
+            // 欄位不完整時停止預覽
             if (! empty($missingHeaders)) {
                 return redirect()
                     ->to('/clients/import')
                     ->with(
                         'error',
-                        'Excel 缺少必要欄位：'
-                            . implode(', ', $missingHeaders)
+                        'Excel 缺少欄位：' . implode('、', $missingHeaders)
                     );
             }
 
-            // 準備預覽資料、錯誤資料與資料筆數
+            // 查出目前未軟刪除的案主編號
+            $clientModel = new ClientModel();
+
+            $existingClients = $clientModel
+                ->select('id')
+                ->findAll();
+
+            // 建立案主編號查找表，方便檢查 s_num 是否存在
+            $existingIds = [];
+
+            foreach ($existingClients as $client) {
+                $existingIds[(string) $client['id']] = true;
+            }
+
+            // 設定欄位最大長度
+            $maxLengths = [
+                'ct_name' => 100,
+                'ct_addr' => 255,
+                'region' => 100,
+                'national_id' => 20,
+                'sex' => 20,
+                'mobile' => 30,
+                'home_phone' => 30,
+                'contact_person_1' => 255,
+                'contact_person_2' => 255,
+                'case_manager' => 100,
+                'care_specialist' => 100,
+                'home_service' => 100,
+                'registered_address' => 255,
+                'remittance_suffix' => 20,
+                'living_status' => 100,
+                'identity_type' => 255,
+                'disability_status' => 100,
+                'disability_level' => 100,
+                'care_level' => 100,
+            ];
+
+            // 數值欄位必須是數字；空白仍允許
+            $decimalFields = [
+                'longitude',
+                'latitude',
+                'checkin_distance',
+                'meal_box_price',
+            ];
+
+            // 準備預覽列、待確認匯入資料及錯誤列
             $previewRows = [];
+            $importRows = [];
+            $seenIds = [];
+            $hasErrors = false;
             $totalRows = 0;
 
-            // 從第二列開始逐筆讀取案主資料
-            foreach ($sheetRows as $rowNumber => $row) {
-                // 依照標題對照表讀取案主姓名
-                $clientName = trim(
-                    (string) ($row[$headerMap['ct_name']] ?? '')
-                );
+            // 逐列讀取案主資料
+            foreach ($sheetRows as $rowIndex => $row) {
+                // 依照標題對照表整理這一列的欄位資料
+                $data = [];
 
-                // 依照標題對照表讀取案主地址
-                $clientAddress = trim(
-                    (string) ($row[$headerMap['ct_addr']] ?? '')
-                );
+                foreach ($expectedHeaders as $header) {
+                    $columnLetter = $headerMap[$header];
 
-                // 依照標題對照表讀取路線編號
-                $routeNumber = trim(
-                    (string) ($row[$headerMap['route_no']] ?? '')
-                );
+                    $data[$header] = trim(
+                        (string) ($row[$columnLetter] ?? '')
+                    );
+                }
 
-                // 三個必要欄位都空白時，略過這一列
-                if (
-                    $clientName === ''
-                    && $clientAddress === ''
-                    && $routeNumber === ''
-                ) {
+                // 整列皆空白時略過
+                if (implode('', $data) === '') {
                     continue;
                 }
 
-                // 計算實際 Excel 列號；標題列是第 1 列
-                $excelRowNumber = (int) $rowNumber + 2;
+                // array_shift 後資料列索引從 0 開始，Excel 實際列號要加 2
+                $excelRowNumber = (int) $rowIndex + 2;
 
-                // 檢查必要欄位是否有填寫
+                // 準備記錄這一列的錯誤
                 $rowErrors = [];
 
-                if ($clientName === '') {
-                    $rowErrors[] = '缺少案主姓名';
+                // s_num 必須是正整數
+                if (
+                    $data['s_num'] === ''
+                    || ! ctype_digit($data['s_num'])
+                    || (int) $data['s_num'] < 1
+                ) {
+                    $rowErrors[] = 's_num 必須是正整數';
+                } else {
+                    $clientId = (string) (int) $data['s_num'];
+
+                    // 案主編號必須存在於未軟刪除的案主資料
+                    if (! isset($existingIds[$clientId])) {
+                        $rowErrors[] = '找不到此案主編號';
+                    }
+
+                    // 同一個 Excel 中不可重複出現相同案主編號
+                    if (isset($seenIds[$clientId])) {
+                        $rowErrors[] = '案主編號重複';
+                    }
+
+                    $seenIds[$clientId] = true;
                 }
 
-                if ($clientAddress === '') {
-                    $rowErrors[] = '缺少案主地址';
+                // 檢查案主姓名
+                if ($data['ct_name'] === '') {
+                    $rowErrors[] = '案主姓名不可空白';
                 }
 
-                if ($routeNumber === '') {
-                    $rowErrors[] = '缺少路線編號';
+                // 檢查案主地址
+                if ($data['ct_addr'] === '') {
+                    $rowErrors[] = '案主地址不可空白';
                 }
 
-                // 將資料加入預覽清單
+                // 路線編號必須是整數
+                if (
+                    $data['route_no'] === ''
+                    || filter_var($data['route_no'], FILTER_VALIDATE_INT) === false
+                ) {
+                    $rowErrors[] = '路線編號必須是整數';
+                }
+
+                // 檢查有字數限制的欄位
+                foreach ($maxLengths as $field => $maxLength) {
+                    if (mb_strlen($data[$field]) > $maxLength) {
+                        $rowErrors[] = $field . '超過 ' . $maxLength . ' 個字';
+                    }
+                }
+
+                // 生日必須是 YYYY-MM-DD 格式
+                if ($data['birthday'] !== '') {
+                    $birthday = \DateTime::createFromFormat(
+                        '!Y-m-d',
+                        $data['birthday']
+                    );
+
+                    if (
+                        $birthday === false
+                        || $birthday->format('Y-m-d') !== $data['birthday']
+                    ) {
+                        $rowErrors[] = 'birthday 必須使用 YYYY-MM-DD 格式';
+                    }
+                }
+
+                // 經緯度、距離及餐盒單價必須是數字
+                foreach ($decimalFields as $field) {
+                    if (
+                        $data[$field] !== ''
+                        && ! is_numeric($data[$field])
+                    ) {
+                        $rowErrors[] = $field . ' 必須是數字';
+                    }
+                }
+
+                // 空白狀態欄位使用資料表預設值
+                if ($data['only_ot_case'] === '') {
+                    $data['only_ot_case'] = '0';
+                }
+
+                if ($data['is_active'] === '') {
+                    $data['is_active'] = '1';
+                }
+
+                // 狀態欄位只能是 0 或 1
+                if (! in_array($data['only_ot_case'], ['0', '1'], true)) {
+                    $rowErrors[] = 'only_ot_case 只能填 0 或 1';
+                }
+
+                if (! in_array($data['is_active'], ['0', '1'], true)) {
+                    $rowErrors[] = 'is_active 只能填 0 或 1';
+                }
+
+                // 轉成匯入時可使用的資料結構
+                $importRows[] = [
+                    's_num' => (int) $data['s_num'],
+                    'client' => [
+                        'ct_name' => $data['ct_name'],
+                        'ct_addr' => $data['ct_addr'],
+                        'route_no' => (int) $data['route_no'],
+                    ],
+                    'profile' => $this->buildClientProfileImportData($data),
+                ];
+
+                // 準備交給預覽頁顯示的資料
                 $previewRows[] = [
                     'rowNumber' => $excelRowNumber,
-                    'ct_name' => $clientName,
-                    'ct_addr' => $clientAddress,
-                    'route_no' => $routeNumber,
+                    's_num' => $data['s_num'],
+                    'ct_name' => $data['ct_name'],
+                    'ct_addr' => $data['ct_addr'],
+                    'route_no' => $data['route_no'],
                     'errorText' => implode('、', $rowErrors),
                 ];
 
-                // 累計非空白資料列數
+                // 只要有一列出錯，就不允許後續確認匯入
+                if (! empty($rowErrors)) {
+                    $hasErrors = true;
+                }
+
+                // 累計有內容的資料列
                 $totalRows++;
+            }
+
+            // 沒有任何案主資料列時返回匯入頁
+            if ($totalRows === 0) {
+                return redirect()
+                    ->to('/clients/import')
+                    ->with('error', 'Excel 沒有可匯入的案主資料。');
+            }
+
+            // 先清除上一次預覽，避免沿用舊資料
+            session()->remove('client_import_rows');
+
+            // 只有全部資料都通過檢查時，才把匯入資料暫存在 Session
+            if (! $hasErrors) {
+                session()->set('client_import_rows', $importRows);
             }
 
             // 建立 Smarty 元件
             $smarty = new SmartyEngine();
 
-            // 傳入頁面使用的共用網址
+            // 傳入預覽頁使用的網址
             $smarty->assign('cssUrl', base_url('css/style.css'));
             $smarty->assign('homeUrl', base_url('/'));
             $smarty->assign('clientListUrl', base_url('clients'));
             $smarty->assign('importUrl', base_url('clients/import'));
 
-            // 傳入 Excel 預覽資料
+            // 傳入確認匯入表單的網址
+            $smarty->assign(
+                'confirmImportUrl',
+                base_url('clients/import/confirm')
+            );
+
+            // 產生確認表單需要的 CSRF 欄位
+            $smarty->assign('csrfField', csrf_field());
+
+            // 傳入預覽內容及檢查狀態
             $smarty->assign('fileName', $file->getClientName());
             $smarty->assign('previewRows', $previewRows);
             $smarty->assign('totalRows', $totalRows);
+            $smarty->assign('hasErrors', $hasErrors);
 
             // 執行 Smarty 預覽模板並取得 HTML
             $html = $smarty->fetch('clients_import_preview.tpl');
 
-            // 回傳 UTF-8 HTML 頁面
+            // 回傳 UTF-8 預覽畫面
             return $this->response
                 ->setContentType('text/html', 'UTF-8')
                 ->setBody($html);
+        
         } catch (Throwable $exception) {
             // 讀取失敗時返回匯入頁，不顯示系統內部錯誤細節
             return redirect()
                 ->to('/clients/import')
                 ->with('error', 'Excel 檔案讀取失敗，請確認檔案內容與格式。');
+        }
+    }
+
+    // 將 Excel 的明細欄位整理成 client_profiles 可使用的資料
+    private function buildClientProfileImportData(array $data): array
+    {
+        // 列出案主明細表中允許匯入的文字與數值欄位
+        $fields = [
+            'region',
+            'national_id',
+            'sex',
+            'birthday',
+            'mobile',
+            'home_phone',
+            'contact_person_1',
+            'contact_person_2',
+            'case_manager',
+            'care_specialist',
+            'home_service',
+            'registered_address',
+            'longitude',
+            'latitude',
+            'checkin_distance',
+            'meal_box_price',
+            'remittance_suffix',
+            'living_status',
+            'identity_type',
+            'disability_status',
+            'health_status',
+            'disability_level',
+            'disease_names',
+            'care_level',
+            'assessment_summary',
+            'treatment_plan_summary',
+        ];
+
+        // 準備要交給 ClientProfileModel 的資料
+        $profileData = [];
+
+        // 將空白欄位轉成 null，其他欄位保留為文字
+        foreach ($fields as $field) {
+            $value = trim((string) ($data[$field] ?? ''));
+
+            $profileData[$field] = $value === '' ? null : $value;
+        }
+
+        // 這兩個欄位在資料表中使用 0 或 1
+        $profileData['only_ot_case'] = (int) ($data['only_ot_case'] ?? 0);
+        $profileData['is_active'] = (int) ($data['is_active'] ?? 1);
+
+        return $profileData;
+    }
+
+    // 使用者確認後，將預覽資料寫入資料庫
+    public function confirmImport()
+    {
+        // 取得預覽階段暫存在 Session 的資料
+        $importRows = session()->get('client_import_rows');
+
+        // 沒有有效預覽資料時，不執行更新
+        if (! is_array($importRows) || $importRows === []) {
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', '找不到有效的匯入預覽，請重新上傳 Excel。');
+        }
+
+        // 建立案主主資料 Model
+        $clientModel = new ClientModel();
+
+        // 建立案主詳細資料 Model
+        $profileModel = new ClientProfileModel();
+
+        // 取得資料庫連線，讓所有資料更新使用同一筆交易
+        $db = \Config\Database::connect();
+
+        // 開始資料庫交易
+        $db->transBegin();
+
+        try {
+            // 逐筆更新預覽階段已通過檢查的資料
+            foreach ($importRows as $row) {
+                // 確認 Session 中每筆資料都有必要結構
+                if (
+                    ! isset($row['s_num'], $row['client'], $row['profile'])
+                    || ! is_array($row['client'])
+                    || ! is_array($row['profile'])
+                ) {
+                    throw new \RuntimeException('匯入資料結構不正確。');
+                }
+
+                // 取得要更新的案主編號
+                $clientId = (int) $row['s_num'];
+
+                // 再確認案主仍存在且未被軟刪除
+                if ($clientId < 1 || $clientModel->find($clientId) === null) {
+                    throw new \RuntimeException(
+                        '案主編號 ' . $clientId . ' 已不存在，請重新上傳檔案。'
+                    );
+                }
+
+                // 更新 clients 資料表中的案主基本資料
+                if (! $clientModel->update($clientId, $row['client'])) {
+                    throw new \RuntimeException(
+                        '案主編號 ' . $clientId . ' 的基本資料更新失敗。'
+                    );
+                }
+
+                // 查詢這位案主是否已有詳細資料
+                $profile = $profileModel->find($clientId);
+
+                if ($profile === null) {
+                    // 尚無詳細資料時，新增一筆並設定關聯案主編號
+                    $profileSaved = $profileModel->insert(
+                        array_merge(
+                            ['client_id' => $clientId],
+                            $row['profile']
+                        )
+                    );
+                } else {
+                    // 已有詳細資料時，更新原本資料
+                    $profileSaved = $profileModel->update(
+                        $clientId,
+                        $row['profile']
+                    );
+                }
+
+                // 明細新增或更新失敗時，取消整批匯入
+                if ($profileSaved === false) {
+                    throw new \RuntimeException(
+                        '案主編號 ' . $clientId . ' 的詳細資料更新失敗。'
+                    );
+                }
+            }
+
+            // 確認交易過程沒有資料庫錯誤
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('資料庫交易失敗。');
+            }
+
+            // 全部更新成功後提交交易
+            $db->transCommit();
+
+            // 清除已使用的預覽資料，避免重複送出
+            session()->remove('client_import_rows');
+
+            // 回到案主列表並顯示更新筆數
+            return redirect()
+                ->to('/clients')
+                ->with('success', '案主資料匯入更新成功，共更新 ' . count($importRows) . ' 筆。');
+        } catch (Throwable $exception) {
+            // 任一筆失敗時回復整批更新
+            $db->transRollback();
+
+            // 將詳細錯誤寫入系統日誌，方便排查
+            log_message(
+                'error',
+                '案主 Excel 匯入失敗：' . $exception->getMessage()
+            );
+
+            // 對使用者顯示簡短錯誤訊息
+            return redirect()
+                ->to('/clients/import')
+                ->with('error', '匯入失敗，沒有完成整批更新。請重新預覽檔案。');
         }
     }
 }
