@@ -8,6 +8,13 @@
  * @var int $pageCount
  * @var string $keyword
  */
+
+// 管理員與工作人員可以新增、匯入及匯出案主資料
+$canManageClients = in_array(
+    session()->get('role'),
+    ['admin', 'staff'],
+    true
+);
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -24,32 +31,34 @@
             
             
             <nav>
+                <!-- 前往系統首頁 -->
                 <a href="<?= base_url('/') ?>">首頁</a>
 
-                <!-- 點擊「案主管理」可展開或收合子選單 -->
-                <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
-                <!-- details 與 summary 標籤是用來製作原生摺疊面板 -->
-                <!-- 容器元素 -->
-                <details class="sidebar-menu-group" >
-                    <!-- 標題元素 -->
+                <!-- 案主管理選單預設展開 -->
+                <details class="sidebar-menu-group" open>
                     <summary>案主管理</summary>
 
                     <div class="sidebar-submenu">
-                        <!-- 案主資料連結 -->
+                        <!-- 前往案主列表 -->
                         <a href="<?= base_url('clients') ?>">案主資料</a>
+
+                        <!-- 管理角色可以開啟 Excel 匯入頁 -->
+                        <?php if ($canManageClients): ?>
+                            <a href="<?= base_url('clients/import') ?>">匯入 Excel</a>
+                        <?php endif; ?>
                     </div>
                 </details>
 
-                <details class="sidebar-menu-group" >
-                    <!-- 標題元素 -->
+                <!-- 送餐員管理選單 -->
+                <details class="sidebar-menu-group">
                     <summary>送餐員管理</summary>
 
                     <div class="sidebar-submenu">
-                        <!-- 送餐員資料連結 -->
                         <a href="<?= base_url('delivery_staff') ?>">送餐員資料</a>
                     </div>
                 </details>
 
+                <!-- 前往資源回收桶 -->
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
             <?php
@@ -189,33 +198,31 @@
                     <h2>案主資料列表</h2>
 
                     <div class="client-table-toolbar">
+                        <?php if ($canManageClients): ?>
+                            <!-- 開啟案主 Excel 匯入頁 -->
+                            <a
+                                href="<?= base_url('clients/import') ?>"
+                                class="btn btn-primary"
+                            >
+                                匯入案主 Excel
+                            </a>
 
-                        <?php
-                        // 匯出檔案包含案主資料，只讓管理員與工作人員看到下載按鈕
-                        $canExportClients = in_array(
-                            session()->get('role'),
-                            ['admin', 'staff'],
-                            true
-                        );
-                        ?>
-
-                        <?php if ($canExportClients): ?>
-                            <!-- 前往受權限保護的案主 Excel 匯出網址 -->
+                            <!-- 下載案主 Excel -->
                             <a
                                 href="<?= base_url('clients/export') ?>"
                                 class="btn btn-primary"
                             >
                                 匯出案主 Excel
                             </a>
-                        <?php endif; ?>
 
-                        <!-- 前往新增案主頁面 -->
-                        <a
-                            href="<?= base_url('clients/create') ?>"
-                            class="btn btn-danger"
-                        >
-                            新增案主
-                        </a>
+                            <!-- 開啟新增案主頁 -->
+                            <a
+                                href="<?= base_url('clients/create') ?>"
+                                class="btn btn-danger"
+                            >
+                                新增案主
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

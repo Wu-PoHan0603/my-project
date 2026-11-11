@@ -1,4 +1,20 @@
 <?php
+/**
+ * 以下變數由 ClientController::index() 傳入。
+ *
+ * @var int $pageSize
+ * @var int[] $pageSizeOptions
+ * @var int $currentPage
+ * @var int $pageCount
+ * @var string $keyword
+ */
+
+// 管理員與工作人員可以新增、匯入及匯出案主資料
+$canManageClients = in_array(
+    session()->get('role'),
+    ['admin', 'staff'],
+    true
+);
 // Controller 會傳入送餐員清單 $staffList
 /** @var array $staffList */
 
@@ -49,30 +65,34 @@ $currentRoleLabel = $roleLabels[$currentRole] ?? '未設定角色';
 
             <!-- 系統主要導覽連結 -->
             <nav>
-                <!-- 回到系統首頁 -->
+                <!-- 前往系統首頁 -->
                 <a href="<?= base_url('/') ?>">首頁</a>
 
-                <!-- 案主管理的子選單 -->
-                <details class="sidebar-menu-group">
+                <!-- 案主管理選單預設展開 -->
+                <details class="sidebar-menu-group" open>
                     <summary>案主管理</summary>
 
                     <div class="sidebar-submenu">
-                        <!-- 前往案主資料列表 -->
+                        <!-- 前往案主列表 -->
                         <a href="<?= base_url('clients') ?>">案主資料</a>
+
+                        <!-- 管理角色可以開啟 Excel 匯入頁 -->
+                        <?php if ($canManageClients): ?>
+                            <a href="<?= base_url('clients/import') ?>">匯入 Excel</a>
+                        <?php endif; ?>
                     </div>
                 </details>
 
-                <!-- 送餐員管理的子選單；目前頁面載入時展開 -->
-                <details class="sidebar-menu-group" open>
+                <!-- 送餐員管理選單 -->
+                <details class="sidebar-menu-group">
                     <summary>送餐員管理</summary>
 
                     <div class="sidebar-submenu">
-                        <!-- 前往送餐員資料列表 -->
                         <a href="<?= base_url('delivery_staff') ?>">送餐員資料</a>
                     </div>
                 </details>
 
-                <!-- 前往案主資源回收桶 -->
+                <!-- 前往資源回收桶 -->
                 <a href="<?= base_url('clients/trash') ?>">資源回收桶</a>
             </nav>
 

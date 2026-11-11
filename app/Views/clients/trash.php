@@ -1,3 +1,21 @@
+<?php
+/**
+ * 以下變數由 ClientController::index() 傳入。
+ *
+ * @var int $pageSize
+ * @var int[] $pageSizeOptions
+ * @var int $currentPage
+ * @var int $pageCount
+ * @var string $keyword
+ */
+
+// 管理員與工作人員可以新增、匯入及匯出案主資料
+$canManageClients = in_array(
+    session()->get('role'),
+    ['admin', 'staff'],
+    true
+);
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 
@@ -18,20 +36,30 @@
             <h2>案主管理系統</h2>
 
             <nav>
-                <!-- #首頁尚未使用 -->
+                <!-- 前往系統首頁 -->
                 <a href="<?= base_url('/') ?>">首頁</a>
-                
-                <!-- 點擊「案主管理」可展開或收合子選單 -->
-                <!-- open 代表頁面載入時先展開；移除 open 就會預設收合 -->
-                <!-- details 與 summary 標籤是用來製作原生摺疊面板 -->
-                <!-- 容器元素 -->
+
+                <!-- 案主管理選單預設展開 -->
                 <details class="sidebar-menu-group" open>
-                    <!-- 標題元素 -->
                     <summary>案主管理</summary>
 
                     <div class="sidebar-submenu">
-                        <!-- 案主資料連結 -->
+                        <!-- 前往案主列表 -->
                         <a href="<?= base_url('clients') ?>">案主資料</a>
+
+                        <!-- 管理角色可以開啟 Excel 匯入頁 -->
+                        <?php if ($canManageClients): ?>
+                            <a href="<?= base_url('clients/import') ?>">匯入 Excel</a>
+                        <?php endif; ?>
+                    </div>
+                </details>
+
+                <!-- 送餐員管理選單 -->
+                <details class="sidebar-menu-group">
+                    <summary>送餐員管理</summary>
+
+                    <div class="sidebar-submenu">
+                        <a href="<?= base_url('delivery_staff') ?>">送餐員資料</a>
                     </div>
                 </details>
 
