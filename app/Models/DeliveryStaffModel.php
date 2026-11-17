@@ -18,9 +18,13 @@ class DeliveryStaffModel extends Model
 
     // 允許新增或修改的欄位
     protected $allowedFields = [
+        'user_id',
         'staff_name',
+        'gender',
+        'age',
         'phone',
         'address',
+        'hire_date',
         'is_active',
     ];
 

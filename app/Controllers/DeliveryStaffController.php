@@ -18,7 +18,27 @@ class DeliveryStaffController extends Controller
 
         // 查詢送餐員，最新建立的資料顯示在前面
         $staffList = $staffModel
-            ->orderBy('id', 'DESC')
+            ->select(
+                'delivery_staff.*,
+                users.username AS app_account,
+                GROUP_CONCAT(
+                    delivery_routes.route_no
+                    ORDER BY delivery_routes.route_no
+                    SEPARATOR ", "
+                ) AS route_numbers'
+            )
+            ->join(
+                'users',
+                'users.id = delivery_staff.user_id',
+                'left'
+            )
+            ->join(
+                'delivery_routes',
+                'delivery_routes.delivery_staff_id = delivery_staff.id',
+                'left'
+            )
+            ->groupBy('delivery_staff.id')
+            ->orderBy('delivery_staff.id', 'DESC')
             ->findAll();
 
         // 取得欄位驗證錯誤訊息
@@ -73,10 +93,18 @@ class DeliveryStaffController extends Controller
         $this->assignCommonData($smarty);
 
         // 傳入新增頁需要的錯誤訊息與舊輸入資料
+        $oldStaffInput = session()->getFlashdata('oldStaffInput') ?? [];
+        $oldStaffInput = is_array($oldStaffInput) ? $oldStaffInput : [];
+
         $smarty->assign('errors', $errors);
-        $smarty->assign('oldStaffName', old('staff_name', ''));
-        $smarty->assign('oldPhone', old('phone', ''));
-        $smarty->assign('oldAddress', old('address', ''));
+        $smarty->assign('oldStaffName', $oldStaffInput['staff_name'] ?? '');
+        $smarty->assign('oldUsername', $oldStaffInput['username'] ?? '');
+        $smarty->assign('oldGender', $oldStaffInput['gender'] ?? '');
+        $smarty->assign('oldAge', $oldStaffInput['age'] ?? '');
+        $smarty->assign('oldPhone', $oldStaffInput['phone'] ?? '');
+        $smarty->assign('oldAddress', $oldStaffInput['address'] ?? '');
+        $smarty->assign('oldHireDate', $oldStaffInput['hire_date'] ?? '');
+        $smarty->assign('errorMessage',session()->getFlashdata('error') ?? '');
 
         // 產生新增表單需要的 CSRF 欄位
         $smarty->assign('csrfField', csrf_field());
@@ -93,83 +121,128 @@ class DeliveryStaffController extends Controller
     // 接收並儲存新增送餐員表單
     public function store()
     {
-        // 接收表單資料，並移除前後空白
+        // 取得並整理表單資料
         $data = [
-            'staff_name' => trim(
-                (string) $this->request->getPost('staff_name')
-            ),
-            'phone' => trim(
-                (string) $this->request->getPost('phone')
-            ),
-            'address' => trim(
-                (string) $this->request->getPost('address')
-            ),
+            'staff_name' => trim((string) $this->request->getPost('staff_name')),
+            'username'   => strtoupper(trim((string) $this->request->getPost('username'))),
+            'password'   => (string) $this->request->getPost('password'),
+            'gender'     => trim((string) $this->request->getPost('gender')),
+            'age'        => trim((string) $this->request->getPost('age')),
+            'phone'      => trim((string) $this->request->getPost('phone')),
+            'address'    => trim((string) $this->request->getPost('address')),
+            'hire_date'  => trim((string) $this->request->getPost('hire_date')),
         ];
 
-        // 設定表單驗證規則
+        // 帳號轉大寫後再次確認格式；密碼不放入舊輸入資料
+        $oldStaffInput = $data;
+        unset($oldStaffInput['password']);
+
+        // 後端驗證不可省略，避免使用者繞過瀏覽器檢查
         $rules = [
             'staff_name' => 'required|max_length[100]',
-            'phone' => 'permit_empty|max_length[30]',
-            'address' => 'permit_empty|max_length[255]',
+            'username'   => 'required|regex_match[/^A[0-9]{2}-[0-9]{3}$/]|is_unique[users.username]',
+            'password'   => 'required|min_length[8]|max_length[255]',
+            'gender'     => 'permit_empty|in_list[男,女,其他]',
+            'age'        => 'permit_empty|integer|greater_than_equal_to[0]|less_than_equal_to[120]',
+            'phone'      => 'permit_empty|max_length[30]',
+            'address'    => 'permit_empty|max_length[255]',
+            'hire_date'  => 'permit_empty|valid_date[Y-m-d]',
         ];
 
-        // 設定驗證失敗時顯示的中文訊息
+        // 驗證失敗時顯示中文提示
         $messages = [
             'staff_name' => [
-                'required' => '請輸入送餐員姓名。',
+                'required'   => '請輸入送餐員姓名。',
                 'max_length' => '姓名不可超過 100 個字。',
             ],
+            'username' => [
+                'required'    => '請輸入 APP 帳號。',
+                'regex_match' => 'APP 帳號格式須為 A 加兩位數字、連字號、三位數字，例如 A10-111。',
+                'is_unique'   => '這個 APP 帳號已經有人使用。',
+            ],
+            'password' => [
+                'required'   => '請輸入初始密碼。',
+                'min_length' => '初始密碼至少需要 8 個字元。',
+                'max_length' => '初始密碼不可超過 255 個字元。',
+            ],
+            'gender' => [
+                'in_list' => '請選擇有效的性別。',
+            ],
+            'age' => [
+                'integer'                => '年齡必須是整數。',
+                'greater_than_equal_to'  => '年齡不可小於 0。',
+                'less_than_equal_to'     => '年齡不可大於 120。',
+            ],
             'phone' => [
-                'max_length' => '電話不可超過 30 個字。',
+                'max_length' => '手機號碼不可超過 30 個字元。',
             ],
             'address' => [
-                'max_length' => '地址不可超過 255 個字。',
+                'max_length' => '地址不可超過 255 個字元。',
+            ],
+            'hire_date' => [
+                'valid_date' => '到職日格式不正確。',
             ],
         ];
 
-        // 驗證失敗時回到新增頁，保留輸入內容和錯誤訊息
         if (! $this->validateData($data, $rules, $messages)) {
             return redirect()
                 ->to('/delivery_staff/create')
-                ->withInput()
-                ->with('errors', $this->validator->getErrors());
+                ->with('errors', $this->validator->getErrors())
+                ->with('oldStaffInput', $oldStaffInput);
         }
 
-        // 建立 Model，準備新增資料
+        $db = db_connect();
         $staffModel = new DeliveryStaffModel();
 
-        // 將姓名、電話與地址寫入資料庫
-        if (! $staffModel->insert($data)) {
+        // 用交易確保 users 和 delivery_staff 同時成功或同時取消
+        $db->transBegin();
+
+        $db->table('users')->insert([
+            'username'      => $data['username'],
+            'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
+            'display_name'  => $data['staff_name'],
+            'role'          => 'staff',
+            'created_at'    => date('Y-m-d H:i:s'),
+        ]);
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+
             return redirect()
                 ->to('/delivery_staff/create')
-                ->withInput()
-                ->with('error', '送餐員新增失敗，請稍後再試。');
+                ->with('error', '登入帳號建立失敗，請確認 APP 帳號是否已使用。')
+                ->with('oldStaffInput', $oldStaffInput);
         }
 
-        // 新增成功後回到列表並顯示成功訊息
+        // 取得剛建立的 users.id，作為送餐員帳號關聯
+        $userId = $db->insertID();
+
+        // 空白的可選欄位存入資料庫時改為 NULL
+        $staffData = [
+            'user_id'   => $userId,
+            'staff_name' => $data['staff_name'],
+            'gender'     => $data['gender'] !== '' ? $data['gender'] : null,
+            'age'        => $data['age'] !== '' ? $data['age'] : null,
+            'phone'      => $data['phone'] !== '' ? $data['phone'] : null,
+            'address'    => $data['address'] !== '' ? $data['address'] : null,
+            'hire_date'  => $data['hire_date'] !== '' ? $data['hire_date'] : null,
+            'is_active'  => 1,
+        ];
+
+        if (! $staffModel->insert($staffData) || $db->transStatus() === false) {
+            $db->transRollback();
+
+            return redirect()
+                ->to('/delivery_staff/create')
+                ->with('error', '送餐員資料新增失敗，請稍後再試。')
+                ->with('oldStaffInput', $oldStaffInput);
+        }
+
+        $db->transCommit();
+
         return redirect()
             ->to('/delivery_staff')
-            ->with('success', '送餐員新增成功。');
-    }
-
-    // 顯示指定送餐員的詳細資料
-    public function detail(int $id)
-    {
-        // 建立 Model，查詢指定送餐員
-        $staffModel = new DeliveryStaffModel();
-        $staff = $staffModel->find($id);
-
-        // 找不到資料時顯示 404
-        if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound(
-                '找不到指定送餐員'
-            );
-        }
-
-        // 載入詳細資料畫面並傳入送餐員資料
-        return view('delivery_staffs/detail', [
-            'staff' => $staff,
-        ]);
+            ->with('success', '送餐員與登入帳號新增成功。');
     }
 
     // 顯示指定送餐員的修改表單

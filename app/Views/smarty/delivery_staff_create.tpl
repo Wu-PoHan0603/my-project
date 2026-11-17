@@ -67,6 +67,12 @@
                     </ul>
                 </div>
             {/if}
+            
+            {if $errorMessage}
+                <p class="delivery-message-error">
+                    {$errorMessage|escape:'html'}
+                </p>
+            {/if}
 
             <section class="delivery-staff-card">
                 <form
@@ -82,19 +88,68 @@
                             type="text"
                             id="staff_name"
                             name="staff_name"
-                            value="{$oldStaffName}"
+                            value="{$oldStaffName|escape:'html'}"
                             maxlength="100"
                             required
                         >
                     </div>
 
                     <div class="delivery-form-field">
-                        <label for="phone">聯絡電話</label>
+                        <label for="username">APP 帳號</label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            value="{$oldUsername|escape:'html'}"
+                            pattern="A[0-9]{2}-[0-9]{3}"
+                            maxlength="7"
+                            placeholder="例如：A10-111"
+                            title="格式範例：A10-111"
+                            required
+                        >
+                    </div>
+
+                    <div class="delivery-form-field">
+                        <label for="password">初始密碼</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="delivery-form-field">
+                        <label for="gender">性別</label>
+                        <select id="gender" name="gender">
+                            <option value="">請選擇</option>
+                            <option value="男" {if $oldGender == '男'}selected{/if}>男</option>
+                            <option value="女" {if $oldGender == '女'}selected{/if}>女</option>
+                            <option value="其他" {if $oldGender == '其他'}selected{/if}>其他</option>
+                        </select>
+                    </div>
+
+                    <div class="delivery-form-field">
+                        <label for="age">年齡</label>
+                        <input
+                            type="number"
+                            id="age"
+                            name="age"
+                            value="{$oldAge|escape:'html'}"
+                            min="0"
+                            max="120"
+                        >
+                    </div>
+
+                    <div class="delivery-form-field">
+                        <label for="phone">執行手機</label>
                         <input
                             type="tel"
                             id="phone"
                             name="phone"
-                            value="{$oldPhone}"
+                            value="{$oldPhone|escape:'html'}"
                             maxlength="30"
                         >
                     </div>
@@ -105,8 +160,18 @@
                             type="text"
                             id="address"
                             name="address"
-                            value="{$oldAddress}"
+                            value="{$oldAddress|escape:'html'}"
                             maxlength="255"
+                        >
+                    </div>
+
+                    <div class="delivery-form-field">
+                        <label for="hire_date">到職日</label>
+                        <input
+                            type="date"
+                            id="hire_date"
+                            name="hire_date"
+                            value="{$oldHireDate|escape:'html'}"
                         >
                     </div>
 
