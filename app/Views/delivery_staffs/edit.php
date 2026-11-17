@@ -202,12 +202,28 @@ $activeValue = (string) old(
                     <?= csrf_field() ?>
 
                     <!-- 姓名、電話和啟用狀態的欄位排版區 -->
+                    <!-- 送餐員可修改資料 -->
                     <div class="client-detail-form-grid">
 
-                        <!-- 送餐員姓名欄位 -->
+                        <div class="client-detail-form-field">
+                            <label for="username">APP 帳號</label>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                value="<?= esc(
+                                    old('username', $staff['app_account'] ?? ''),
+                                    'attr'
+                                ) ?>"
+                                pattern="A[0-9]{2}-[0-9]{3}"
+                                maxlength="7"
+                                placeholder="例如：A10-111"
+                                required
+                            >
+                        </div>
+
                         <div class="client-detail-form-field">
                             <label for="staff_name">送餐員姓名</label>
-
                             <input
                                 type="text"
                                 id="staff_name"
@@ -221,35 +237,82 @@ $activeValue = (string) old(
                             >
                         </div>
 
-                        <!-- 聯絡電話欄位；電話可以留空 -->
                         <div class="client-detail-form-field">
-                            <label for="phone">聯絡電話</label>
+                            <label for="gender">性別</label>
+                            <?php $genderValue = old('gender', $staff['gender'] ?? ''); ?>
+                            <select id="gender" name="gender">
+                                <option value="">請選擇</option>
+                                <option value="男" <?= $genderValue === '男' ? 'selected' : '' ?>>男</option>
+                                <option value="女" <?= $genderValue === '女' ? 'selected' : '' ?>>女</option>
+                                <option value="其他" <?= $genderValue === '其他' ? 'selected' : '' ?>>其他</option>
+                            </select>
+                        </div>
 
+                        <div class="client-detail-form-field">
+                            <label for="age">年齡</label>
+                            <input
+                                type="number"
+                                id="age"
+                                name="age"
+                                value="<?= esc(old('age', $staff['age'] ?? ''), 'attr') ?>"
+                                min="0"
+                                max="120"
+                            >
+                        </div>
+
+                        <div class="client-detail-form-field">
+                            <label for="phone">執行手機</label>
                             <input
                                 type="tel"
                                 id="phone"
                                 name="phone"
-                                value="<?= esc(
-                                    old('phone', $staff['phone'] ?? ''),
-                                    'attr'
-                                ) ?>"
+                                value="<?= esc(old('phone', $staff['phone'] ?? ''), 'attr') ?>"
                                 maxlength="30"
                             >
                         </div>
 
-                        <!-- 送餐員啟用狀態開關 -->
+                        <div class="client-detail-form-field">
+                            <label for="address">地址</label>
+                            <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                value="<?= esc(old('address', $staff['address'] ?? ''), 'attr') ?>"
+                                maxlength="255"
+                            >
+                        </div>
+
+                        <div class="client-detail-form-field">
+                            <label for="hire_date">到職日</label>
+                            <input
+                                type="date"
+                                id="hire_date"
+                                name="hire_date"
+                                value="<?= esc(
+                                    old('hire_date', $staff['hire_date'] ?? ''),
+                                    'attr'
+                                ) ?>"
+                            >
+                        </div>
+
+                        <div class="client-detail-form-field">
+                            <label for="password">重設登入密碼</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                minlength="8"
+                                autocomplete="new-password"
+                            >
+                            <small>不修改密碼時請留空。</small>
+                        </div>
+
                         <div class="client-detail-form-field">
                             <label for="is_active">送餐員啟用</label>
 
                             <div class="staff-status-toggle">
-                                <!-- 開關未勾選時送出 0，代表停用 -->
-                                <input
-                                    type="hidden"
-                                    name="is_active"
-                                    value="0"
-                                >
+                                <input type="hidden" name="is_active" value="0">
 
-                                <!-- 開關勾選時送出 1，代表啟用 -->
                                 <input
                                     type="checkbox"
                                     id="is_active"
@@ -261,7 +324,6 @@ $activeValue = (string) old(
                                     <?= $activeValue === '1' ? 'checked' : '' ?>
                                 >
 
-                                <!-- 顯示開關和目前狀態文字 -->
                                 <label class="staff-switch-label" for="is_active">
                                     <span class="staff-switch-track" aria-hidden="true">
                                         <span class="staff-switch-knob"></span>

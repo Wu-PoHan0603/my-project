@@ -67,7 +67,7 @@
                     </ul>
                 </div>
             {/if}
-            
+
             {if $errorMessage}
                 <p class="delivery-message-error">
                     {$errorMessage|escape:'html'}
@@ -101,7 +101,7 @@
                             id="username"
                             name="username"
                             value="{$oldUsername|escape:'html'}"
-                            pattern="A[0-9]{2}-[0-9]{3}"
+                            pattern="A[0-9][0-9]-[0-9][0-9][0-9]"
                             maxlength="7"
                             placeholder="例如：A10-111"
                             title="格式範例：A10-111"

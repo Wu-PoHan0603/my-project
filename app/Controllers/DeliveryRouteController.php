@@ -81,6 +81,139 @@ class DeliveryRouteController extends Controller
             ->setBody($html);
     }
 
+    // 顯示指定送餐員目前的路線，以及可指派的路線
+    public function staffRoutes(int $staffId)
+    {
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($staffId);
+
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 只查詢尚未指派，或目前已指派給這位送餐員的路線
+        $routeList = db_connect()
+            ->table('delivery_routes')
+            ->select('id, route_no, delivery_staff_id')
+            ->groupStart()
+                ->where('delivery_staff_id', null)
+                ->orWhere('delivery_staff_id', $staffId)
+            ->groupEnd()
+            ->orderBy('route_no', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // 整理目前已指派給這位送餐員的路線 ID
+        $selectedRouteIds = [];
+
+        foreach ($routeList as $route) {
+            if ((int) ($route['delivery_staff_id'] ?? 0) === $staffId) {
+                $selectedRouteIds[] = (int) $route['id'];
+            }
+        }
+
+        $smarty = new SmartyEngine();
+        $this->assignCommonData($smarty);
+
+        $smarty->assign('staff', $staff);
+        $smarty->assign('routes', $routeList);
+        $smarty->assign('selectedRouteIds', $selectedRouteIds);
+        $smarty->assign(
+            'successMessage',
+            session()->getFlashdata('success') ?? ''
+        );
+        $smarty->assign(
+            'errorMessage',
+            session()->getFlashdata('error') ?? ''
+        );
+        $smarty->assign('csrfField', csrf_field());
+
+        $html = $smarty->fetch('delivery_staff_routes.tpl');
+
+        return $this->response
+            ->setContentType('text/html', 'UTF-8')
+            ->setBody($html);
+    }
+
+    // 儲存指定送餐員負責的路線
+    public function saveStaffRoutes(int $staffId)
+    {
+        // 確認送餐員存在
+        $staffModel = new DeliveryStaffModel();
+        $staff = $staffModel->find($staffId);
+
+        if ($staff === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
+        }
+
+        // 沒有勾選路線時，表單不會送 route_ids
+        $routeIds = $this->request->getPost('route_ids') ?? [];
+
+        if (! is_array($routeIds)) {
+            return redirect()
+                ->to('/delivery_staff/' . $staffId . '/routes')
+                ->with('error', '路線資料格式不正確。');
+        }
+
+        // 只允許選擇尚未指派，或目前屬於這位送餐員的路線
+        $availableRoutes = db_connect()
+            ->table('delivery_routes')
+            ->select('id')
+            ->groupStart()
+                ->where('delivery_staff_id', null)
+                ->orWhere('delivery_staff_id', $staffId)
+            ->groupEnd()
+            ->get()
+            ->getResultArray();
+
+        $availableIds = array_map(
+            'intval',
+            array_column($availableRoutes, 'id')
+        );
+
+        foreach ($routeIds as $routeId) {
+            if (
+                ! ctype_digit((string) $routeId)
+                || ! in_array((int) $routeId, $availableIds, true)
+            ) {
+                return redirect()
+                    ->to('/delivery_staff/' . $staffId . '/routes')
+                    ->with('error', '所選路線無法指派，請重新選擇。');
+            }
+        }
+
+        $routeIds = array_values(array_unique(array_map('intval', $routeIds)));
+
+        $db = db_connect();
+        $db->transBegin();
+
+        // 先解除這位送餐員原本的路線
+        $db->table('delivery_routes')
+            ->where('delivery_staff_id', $staffId)
+            ->update(['delivery_staff_id' => null]);
+
+        // 再指派表單中勾選的路線
+        if (! empty($routeIds)) {
+            $db->table('delivery_routes')
+                ->whereIn('id', $routeIds)
+                ->update(['delivery_staff_id' => $staffId]);
+        }
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+
+            return redirect()
+                ->to('/delivery_staff/' . $staffId . '/routes')
+                ->with('error', '路線儲存失敗，請稍後再試。');
+        }
+
+        $db->transCommit();
+
+        return redirect()
+            ->to('/delivery_staff/' . $staffId . '/routes')
+            ->with('success', '送餐員負責路線已更新。');
+    }
+
     // 儲存單一路線的送餐員指派
     public function assign(int $id)
     {

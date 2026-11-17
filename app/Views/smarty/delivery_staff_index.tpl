@@ -130,6 +130,12 @@
                 </p>
             {/if}
 
+            {if $errorMessage}
+                <p class="delivery-message-error">
+                    {$errorMessage|escape:'html'}
+                </p>
+            {/if}
+
             {* 有欄位錯誤時逐項顯示 *}
             {if !empty($errors)}
                 <div class="delivery-message-error">
@@ -159,81 +165,77 @@
                 {if !empty($staffList)}
                     <table class="delivery-staff-table">
                         <thead>
+                        <tr>
+                            <th>編號</th>
+                            <th>APP 帳號</th>
+                            <th>送餐員姓名</th>
+                            <th>性別</th>
+                            <th>年紀</th>
+                            <th>餐線</th>
+                            <th>執行手機</th>
+                            <th>狀態</th>
+                            <th>到職日</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {foreach $staffList as $staff}
                             <tr>
-                                <th>編號</th>
-                                <th>送餐員姓名</th>
-                                <th>聯絡電話</th>
-                                <th>地址</th>
-                                <th>狀態</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
+                                <td>{$staff.id}</td>
+                                <td>{$staff.app_account|default:'未設定'|escape:'html'}</td>
+                                <td>{$staff.staff_name|escape:'html'}</td>
+                                <td>{$staff.gender|default:'未填'|escape:'html'}</td>
+                                <td>{$staff.age|default:'未填'|escape:'html'}</td>
+                                <td>{$staff.route_numbers|default:'未指派'|escape:'html'}</td>
+                                <td>{$staff.phone|default:'未填'|escape:'html'}</td>
+                                <td>
+                                    {if $staff.is_active == 1}
+                                        啟用
+                                    {else}
+                                        停用
+                                    {/if}
+                                </td>
+                                <td>{$staff.hire_date|default:'未填'|escape:'html'}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a
+                                            href="{$staffListUrl}/{$staff.id}/detail"
+                                            class="btn btn-primary"
+                                        >
+                                            詳細
+                                        </a>
 
-                        <tbody>
-                            {* 逐筆顯示 Controller 傳入的送餐員資料 *}
-                            {foreach $staffList as $staff}
-                                <tr>
-                                    <td>{$staff.id}</td>
-                                    <td>{$staff.staff_name}</td>
-                                    <td>{$staff.phone|default:''}</td>
-                                    <td>{$staff.address|default:''}</td>
-                                    <td>
-                                        {if $staff.is_active == 1}
-                                            啟用
-                                        {else}
-                                            停用
-                                        {/if}
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
+                                        <a href="{$staffListUrl}/{$staff.id}/routes">
+                                            路線指派
+                                        </a>
 
-                                            {* 所有可查看資料的使用者都能開啟詳細資料 *}
+                                        {if $canManageStaff}
                                             <a
-                                                href="{$staffListUrl}/{$staff.id}/detail"
-                                                class="btn btn-primary"
+                                                href="{$staffListUrl}/{$staff.id}/edit"
+                                                class="btn btn-warning"
                                             >
-                                                詳細資料
+                                                修改
                                             </a>
 
-                                            {* 只有管理員與工作人員能執行管理操作 *}
-                                            {if $canManageStaff}
+                                            <form
+                                                action="{$staffListUrl}/delete/{$staff.id}"
+                                                method="post"
+                                                class="action-form"
+                                                onsubmit="return confirm('確定要永久刪除這位送餐員嗎？')"
+                                            >
+                                                {$csrfField nofilter}
 
-                                                {* 前往該送餐員的修改頁面 *}
-                                                <a
-                                                    href="{$staffListUrl}/{$staff.id}/edit"
-                                                    class="btn btn-warning"
-                                                >
-                                                    修改
-                                                </a>
-
-                                                {* 前往路線指派頁 *}
-                                                <a
-                                                    href="{$deliveryRoutesUrl}"
-                                                    class="btn btn-primary"
-                                                >
-                                                    路線指派
-                                                </a>
-
-                                                {* 刪除會修改資料，因此使用 POST 表單送出 *}
-                                                <form
-                                                    action="{$staffListUrl}/delete/{$staff.id}"
-                                                    method="post"
-                                                    class="action-form"
-                                                    onsubmit="return confirm('確定要永久刪除這位送餐員嗎？')"
-                                                >
-                                                    {* 輸出 CI4 產生的 CSRF 欄位 *}
-                                                    {$csrfField nofilter}
-
-                                                    <button type="submit" class="btn btn-danger">
-                                                        刪除
-                                                    </button>
-                                                </form>
-                                            {/if}
-                                        </div>
-                                    </td>
-                                </tr>
-                            {/foreach}
-                        </tbody>
+                                                <button type="submit" class="btn btn-danger">
+                                                    刪除
+                                                </button>
+                                            </form>
+                                        {/if}
+                                    </div>
+                                </td>
+                            </tr>
+                        {/foreach}
+                    </tbody>
                     </table>
                 {else}
                     <p>目前還沒有送餐員資料。</p>

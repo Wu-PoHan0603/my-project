@@ -10,6 +10,8 @@
  * @var string $keyword
  */
 
+use League\Uri\BaseUri;
+
 // 管理員與工作人員可以新增、匯入及匯出案主資料
 $canManageClients = in_array(
     session()->get('role'),
@@ -303,6 +305,14 @@ $currentRoleLabel = $roleLabels[$currentRole] ?? '未設定角色';
                                                 ) ?>"
                                             >
                                                 詳細資料
+                                            </a>
+
+                                            <!-- 前往路線指派頁 -->
+                                            <a
+                                                class="btn btn-warning"
+                                                href="<?= base_url('delivery-routes') ?>"
+                                            >
+                                                指派路線
                                             </a>
 
                                             <!-- 前往這位送餐員的修改表單 -->

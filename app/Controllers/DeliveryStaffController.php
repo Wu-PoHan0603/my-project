@@ -248,76 +248,127 @@ class DeliveryStaffController extends Controller
     // 顯示指定送餐員的修改表單
     public function edit(int $id)
     {
-        // 建立 Model，查詢指定送餐員
         $staffModel = new DeliveryStaffModel();
-        $staff = $staffModel->find($id);
 
-        // 找不到資料時顯示 404
+        // 查詢送餐員資料，並讀取關聯的 APP 登入帳號
+        $staff = $staffModel
+            ->select('delivery_staff.*, users.username AS app_account')
+            ->join(
+                'users',
+                'users.id = delivery_staff.user_id',
+                'left'
+            )
+            ->find($id);
+
+        // 找不到送餐員資料時顯示 404
         if ($staff === null) {
             throw PageNotFoundException::forPageNotFound(
                 '找不到指定送餐員'
             );
         }
 
-        // 載入修改表單並傳入送餐員資料
+        // 查詢尚未指派，或目前已指派給這位送餐員的餐線
+        $routes = db_connect()
+            ->table('delivery_routes')
+            ->select('id, route_no, delivery_staff_id')
+            ->groupStart()
+                ->where('delivery_staff_id', null)
+                ->orWhere('delivery_staff_id', $id)
+            ->groupEnd()
+            ->orderBy('route_no', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // 整理目前已指派給這位送餐員的餐線資料編號
+        $selectedRouteIds = [];
+
+        foreach ($routes as $route) {
+            if ((int) ($route['delivery_staff_id'] ?? 0) === $id) {
+                $selectedRouteIds[] = (int) $route['id'];
+            }
+        }
+
+        // 將送餐員、餐線清單和目前選取的餐線交給修改頁
         return view('delivery_staffs/edit', [
-            'staff' => $staff,
+            'staff'            => $staff,
         ]);
     }
 
     // 接收並更新指定送餐員資料
     public function update(int $id)
     {
-        // 建立 Model，確認送餐員存在
         $staffModel = new DeliveryStaffModel();
         $staff = $staffModel->find($id);
 
-        // 找不到資料時顯示 404
         if ($staff === null) {
-            throw PageNotFoundException::forPageNotFound(
-                '找不到指定送餐員'
-            );
+            throw PageNotFoundException::forPageNotFound('找不到指定送餐員');
         }
 
-        // 取得表單送來的地址
-        $postedAddress = $this->request->getPost('address');
+        // 修改 APP 帳號需要找到關聯的 users 資料
+        if (empty($staff['user_id'])) {
+            return redirect()
+                ->to('/delivery_staff/' . $id . '/edit')
+                ->with('error', '這位送餐員尚未連結登入帳號，無法修改 APP 帳號。');
+        }
 
-        // 整理要更新的資料
-        // 表單未送出地址欄位時，保留資料庫中的原地址
+        // 整理表單資料；APP 帳號統一轉成大寫
         $data = [
-            'staff_name' => trim(
-                (string) $this->request->getPost('staff_name')
-            ),
-            'phone' => trim(
-                (string) $this->request->getPost('phone')
-            ),
-            'address' => trim(
-                (string) ($postedAddress ?? ($staff['address'] ?? ''))
-            ),
-            'is_active' => trim(
-                (string) $this->request->getPost('is_active')
-            ),
+            'user_id'   => (int) $staff['user_id'],
+            'username'  => strtoupper(trim((string) $this->request->getPost('username'))),
+            'staff_name' => trim((string) $this->request->getPost('staff_name')),
+            'password'  => (string) $this->request->getPost('password'),
+            'gender'    => trim((string) $this->request->getPost('gender')),
+            'age'       => trim((string) $this->request->getPost('age')),
+            'phone'     => trim((string) $this->request->getPost('phone')),
+            'address'   => trim((string) $this->request->getPost('address')),
+            'hire_date' => trim((string) $this->request->getPost('hire_date')),
+            'is_active' => trim((string) $this->request->getPost('is_active')),
         ];
 
-        // 設定表單驗證規則
+        // 驗證基本欄位；帳號唯一性檢查會排除這位送餐員目前使用的帳號
         $rules = [
+            'user_id' => 'required|integer',
+            'username' => 'required|regex_match[/^A[0-9]{2}-[0-9]{3}$/]|is_unique[users.username,id,{user_id}]',
             'staff_name' => 'required|max_length[100]',
+            'password' => 'permit_empty|min_length[8]|max_length[255]',
+            'gender' => 'permit_empty|in_list[男,女,其他]',
+            'age' => 'permit_empty|integer|greater_than_equal_to[0]|less_than_equal_to[120]',
             'phone' => 'permit_empty|max_length[30]',
             'address' => 'permit_empty|max_length[255]',
+            'hire_date' => 'permit_empty|valid_date[Y-m-d]',
             'is_active' => 'required|in_list[0,1]',
         ];
 
-        // 設定驗證失敗時顯示的中文訊息
         $messages = [
+            'username' => [
+                'required' => '請輸入 APP 帳號。',
+                'regex_match' => 'APP 帳號格式須為 A10-111 這種格式。',
+                'is_unique' => '這個 APP 帳號已經有人使用。',
+            ],
             'staff_name' => [
                 'required' => '請輸入送餐員姓名。',
                 'max_length' => '姓名不可超過 100 個字。',
             ],
+            'password' => [
+                'min_length' => '新密碼至少需要 8 個字元。',
+                'max_length' => '新密碼不可超過 255 個字元。',
+            ],
+            'gender' => [
+                'in_list' => '請選擇有效的性別。',
+            ],
+            'age' => [
+                'integer' => '年齡必須是整數。',
+                'greater_than_equal_to' => '年齡不可小於 0。',
+                'less_than_equal_to' => '年齡不可大於 120。',
+            ],
             'phone' => [
-                'max_length' => '電話不可超過 30 個字。',
+                'max_length' => '手機號碼不可超過 30 個字元。',
             ],
             'address' => [
-                'max_length' => '地址不可超過 255 個字。',
+                'max_length' => '地址不可超過 255 個字元。',
+            ],
+            'hire_date' => [
+                'valid_date' => '到職日格式不正確。',
             ],
             'is_active' => [
                 'required' => '請選擇送餐員啟用狀態。',
@@ -325,7 +376,6 @@ class DeliveryStaffController extends Controller
             ],
         ];
 
-        // 驗證失敗時回到修改頁，保留輸入內容與錯誤訊息
         if (! $this->validateData($data, $rules, $messages)) {
             return redirect()
                 ->to('/delivery_staff/' . $id . '/edit')
@@ -333,15 +383,100 @@ class DeliveryStaffController extends Controller
                 ->with('errors', $this->validator->getErrors());
         }
 
-        // 更新資料庫中的送餐員資料
-        if (! $staffModel->update($id, $data)) {
+        // route_ids[] 是多選欄位；未勾選任何路線時會是空陣列
+        $routeIds = $this->request->getPost('route_ids') ?? [];
+
+        if (! is_array($routeIds)) {
             return redirect()
                 ->to('/delivery_staff/' . $id . '/edit')
                 ->withInput()
-                ->with('error', '送餐員資料更新失敗。');
+                ->with('error', '路線資料格式不正確。');
         }
 
-        // 更新成功後回到列表並顯示成功訊息
+        // 確認選取的路線目前未指派，或原本就屬於這位送餐員
+        $availableRoutes = db_connect()
+            ->table('delivery_routes')
+            ->select('id')
+            ->groupStart()
+                ->where('delivery_staff_id', null)
+                ->orWhere('delivery_staff_id', $id)
+            ->groupEnd()
+            ->get()
+            ->getResultArray();
+
+        $availableRouteIds = array_map(
+            'intval',
+            array_column($availableRoutes, 'id')
+        );
+
+        foreach ($routeIds as $routeId) {
+            if (! ctype_digit((string) $routeId)
+                || ! in_array((int) $routeId, $availableRouteIds, true)
+            ) {
+                return redirect()
+                    ->to('/delivery_staff/' . $id . '/edit')
+                    ->withInput()
+                    ->with('error', '所選路線無法指派，請重新選擇。');
+            }
+        }
+
+        $routeIds = array_values(array_unique(array_map('intval', $routeIds)));
+
+        $db = db_connect();
+        $db->transBegin();
+
+        // 更新登入帳號名稱；有填新密碼時才更新密碼
+        $userData = [
+            'username' => $data['username'],
+            'display_name' => $data['staff_name'],
+        ];
+
+        if ($data['password'] !== '') {
+            $userData['password_hash'] = password_hash(
+                $data['password'],
+                PASSWORD_DEFAULT
+            );
+        }
+
+        $db->table('users')
+            ->where('id', $staff['user_id'])
+            ->update($userData);
+
+        // 更新送餐員個人資料
+        $staffData = [
+            'staff_name' => $data['staff_name'],
+            'gender' => $data['gender'] !== '' ? $data['gender'] : null,
+            'age' => $data['age'] !== '' ? (int) $data['age'] : null,
+            'phone' => $data['phone'] !== '' ? $data['phone'] : null,
+            'address' => $data['address'] !== '' ? $data['address'] : null,
+            'hire_date' => $data['hire_date'] !== '' ? $data['hire_date'] : null,
+            'is_active' => (int) $data['is_active'],
+        ];
+
+        $staffUpdated = $staffModel->update($id, $staffData);
+
+        // 先清除這位送餐員原本的路線，再套用表單中勾選的路線
+        $db->table('delivery_routes')
+            ->where('delivery_staff_id', $id)
+            ->update(['delivery_staff_id' => null]);
+
+        if (! empty($routeIds)) {
+            $db->table('delivery_routes')
+                ->whereIn('id', $routeIds)
+                ->update(['delivery_staff_id' => $id]);
+        }
+
+        if (! $staffUpdated || $db->transStatus() === false) {
+            $db->transRollback();
+
+            return redirect()
+                ->to('/delivery_staff/' . $id . '/edit')
+                ->withInput()
+                ->with('error', '送餐員資料更新失敗，請稍後再試。');
+        }
+
+        $db->transCommit();
+
         return redirect()
             ->to('/delivery_staff')
             ->with('success', '送餐員資料更新成功。');

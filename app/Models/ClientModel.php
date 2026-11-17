@@ -17,6 +17,7 @@ class ClientModel extends Model
         'ct_name',
         'ct_addr',
         'route_no',
+        'delivery_order',
     ];
 
     // 開啟新增與更新時的自動時間紀錄

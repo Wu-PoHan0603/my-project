@@ -87,11 +87,18 @@ $routes->get(
     ['filter' => ['auth', 'role:admin,staff']]
 );
 
+// 查看指定送餐員負責的路線
+$routes->get(
+    'delivery_staff/(:num)/routes',
+    'DeliveryRouteController::staffRoutes/$1',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
 // 顯示路線指派頁
 $routes->get(
     'delivery-routes',
     'DeliveryRouteController::index',
-    ['filter' => 'auth']
+    ['filter' => ['auth', 'role:admin,staff']]
 );
 
 // 顯示案主 Excel 匯入頁；限已登入的管理員或工作人員使用
@@ -105,6 +112,13 @@ $routes->get(
 $routes->get(
     'clients/export',
     'ClientController::export',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
+// 查看指定路線中的案主
+$routes->get(
+    'delivery-routes/(:num)/clients',
+    'DeliveryRouteController::routeClients/$1',
     ['filter' => ['auth', 'role:admin,staff']]
 );
 
@@ -235,6 +249,21 @@ $routes->post(
 $routes->post(
     'delivery-routes/assign/(:num)',
     'DeliveryRouteController::assign/$1',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
+// 儲存指定送餐員負責的路線
+$routes->post(
+    'delivery_staff/(:num)/routes',
+    'DeliveryRouteController::saveStaffRoutes/$1',
+    ['filter' => ['auth', 'role:admin,staff']]
+);
+
+
+// 儲存指定路線的案主送餐順序
+$routes->post(
+    'delivery-routes/(:num)/clients/order',
+    'DeliveryRouteController::saveClientOrder/$1',
     ['filter' => ['auth', 'role:admin,staff']]
 );
 
