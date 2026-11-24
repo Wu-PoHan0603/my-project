@@ -7,6 +7,7 @@ use App\Models\DeliveryRouteModel;
 use App\Models\DeliveryStaffModel;
 use CodeIgniter\Controller;
 use CodeIgniter\Exceptions\PageNotFoundException;
+use App\Models\ClientModel;
 
 // 處理路線列表及送餐員指派
 class DeliveryRouteController extends Controller
@@ -212,6 +213,172 @@ class DeliveryRouteController extends Controller
         return redirect()
             ->to('/delivery_staff/' . $staffId . '/routes')
             ->with('success', '送餐員負責路線已更新。');
+    }
+
+    // 顯示指定路線的案主列表
+    public function routeClients(int $routeId)
+    {
+        $routeModel = new DeliveryRouteModel();
+        $route = $routeModel->find($routeId);
+
+        if ($route === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定路線');
+        }
+
+        // 依照案主資料中的 route_no 找出這條路線的案主
+        $clientModel = new ClientModel();
+        $clients = $clientModel
+            ->where('route_no', $route['route_no'])
+            ->orderBy('delivery_order', 'ASC')
+            ->orderBy('id', 'ASC')
+            ->findAll();
+
+        // 只挑出已經有經緯度的案主，準備交給地圖顯示
+        $mapClients = array_values(array_map(
+            static function (array $client): array {
+                return [
+                    'id'       => (int) $client['id'],
+                    'name'     => $client['ct_name'],
+                    'address'  => $client['ct_addr'],
+                    'latitude' => (float) $client['latitude'],
+                    'longitude'=> (float) $client['longitude'],
+                    'order'    => (int) ($client['delivery_order'] ?? 0),
+                ];
+            },
+            array_filter(
+                $clients,
+                static fn (array $client): bool =>
+                    is_numeric($client['latitude'] ?? null)
+                    && is_numeric($client['longitude'] ?? null)
+            )
+        ));
+
+        // 轉成 JSON，並避免案主文字被當成 HTML 或 JavaScript 程式碼
+        $mapClientsJson = json_encode(
+            $mapClients,
+            JSON_UNESCAPED_UNICODE
+            | JSON_HEX_TAG
+            | JSON_HEX_APOS
+            | JSON_HEX_AMP
+            | JSON_HEX_QUOT
+        );
+
+        // 傳給 Smarty 地圖模板
+        $smarty->assign('mapClientsJson', $mapClientsJson ?: '[]');
+        
+        $smarty = new SmartyEngine();
+        $this->assignCommonData($smarty);
+
+        $smarty->assign('route', $route);
+        $smarty->assign('clients', $clients);
+        $smarty->assign(
+            'routeOrderUrl',
+            base_url('delivery-routes/' . $routeId . '/clients/order')
+        );
+        $smarty->assign('csrfField', csrf_field());
+
+        $smarty->assign(
+            'successMessage',
+            session()->getFlashdata('success') ?? ''
+        );
+        $smarty->assign(
+            'errorMessage',
+            session()->getFlashdata('error') ?? ''
+        );
+
+        $html = $smarty->fetch('delivery_route_clients.tpl');
+
+        return $this->response
+            ->setContentType('text/html', 'UTF-8')
+            ->setBody($html);
+    }
+
+    // 儲存拖曳後的案主送餐順序
+    public function saveClientOrder(int $routeId)
+    {
+        $routeModel = new DeliveryRouteModel();
+        $route = $routeModel->find($routeId);
+
+        if ($route === null) {
+            throw PageNotFoundException::forPageNotFound('找不到指定路線');
+        }
+
+        // 表單中的 client_ids[] 順序就是拖曳後的順序
+        $clientIds = $this->request->getPost('client_ids');
+
+        if (! is_array($clientIds)) {
+            return redirect()
+                ->to('/delivery-routes/' . $routeId . '/clients')
+                ->with('error', '案主順序資料格式不正確。');
+        }
+
+        // 確認每個案主編號都是正整數
+        foreach ($clientIds as $clientId) {
+            if (! ctype_digit((string) $clientId)) {
+                return redirect()
+                    ->to('/delivery-routes/' . $routeId . '/clients')
+                    ->with('error', '案主編號資料不正確。');
+            }
+        }
+
+        $clientIds = array_map('intval', $clientIds);
+
+        // 不允許重複的案主編號
+        if (count($clientIds) !== count(array_unique($clientIds))) {
+            return redirect()
+                ->to('/delivery-routes/' . $routeId . '/clients')
+                ->with('error', '案主排序資料有重複項目。');
+        }
+
+        // 取得目前屬於這條路線的案主編號
+        $clientModel = new ClientModel();
+        $expectedIds = $clientModel
+            ->select('id')
+            ->where('route_no', $route['route_no'])
+            ->findColumn('id');
+
+        $expectedIds = array_map('intval', $expectedIds ?? []);
+
+        // 確認送來的案主清單與這條路線目前的案主完全相同
+        $submittedIds = $clientIds;
+        sort($expectedIds);
+        sort($submittedIds);
+
+        if ($expectedIds !== $submittedIds) {
+            return redirect()
+                ->to('/delivery-routes/' . $routeId . '/clients')
+                ->with('error', '案主清單已變更，請重新整理頁面後再排序。');
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+
+        // 依表單中的順序，從 1 開始寫入送餐順序
+        foreach ($clientIds as $index => $clientId) {
+            if (! $clientModel->update($clientId, [
+                'delivery_order' => $index + 1,
+            ])) {
+                $db->transRollback();
+
+                return redirect()
+                    ->to('/delivery-routes/' . $routeId . '/clients')
+                    ->with('error', '送餐順序儲存失敗。');
+            }
+        }
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+
+            return redirect()
+                ->to('/delivery-routes/' . $routeId . '/clients')
+                ->with('error', '送餐順序儲存失敗。');
+        }
+
+        $db->transCommit();
+
+        return redirect()
+            ->to('/delivery-routes/' . $routeId . '/clients')
+            ->with('success', '送餐順序已儲存。');
     }
 
     // 儲存單一路線的送餐員指派

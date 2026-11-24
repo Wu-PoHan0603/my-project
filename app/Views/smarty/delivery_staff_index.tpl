@@ -206,7 +206,10 @@
                                             詳細
                                         </a>
 
-                                        <a href="{$staffListUrl}/{$staff.id}/routes">
+                                        <a 
+                                            href="{$staffListUrl}/{$staff.id}/routes"
+                                            class="btn btn-warning"
+                                        >
                                             路線指派
                                         </a>
 
