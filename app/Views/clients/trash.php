@@ -268,5 +268,4 @@ $canManageClients = in_array(
         </main>
     </div>
 </body>
-
 </html>

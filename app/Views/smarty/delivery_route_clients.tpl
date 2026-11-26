@@ -218,7 +218,7 @@
         if (mapElement && typeof L !== 'undefined') {
             const map = L.map('client-map').setView([23.6978, 120.9605], 8);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('{literal}https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png{/literal}', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 

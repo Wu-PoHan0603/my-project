@@ -225,35 +225,45 @@ class DeliveryRouteController extends Controller
             throw PageNotFoundException::forPageNotFound('找不到指定路線');
         }
 
-        // 依照案主資料中的 route_no 找出這條路線的案主
+        // 經緯度儲存在 client_profiles，因此查詢時要連接明細表
         $clientModel = new ClientModel();
         $clients = $clientModel
-            ->where('route_no', $route['route_no'])
-            ->orderBy('delivery_order', 'ASC')
-            ->orderBy('id', 'ASC')
+            ->select(
+                'clients.*,
+                client_profiles.latitude AS profile_latitude,
+                client_profiles.longitude AS profile_longitude'
+            )
+            ->join(
+                'client_profiles',
+                'client_profiles.client_id = clients.id',
+                'left'
+            )
+            ->where('clients.route_no', $route['route_no'])
+            ->orderBy('clients.delivery_order', 'ASC')
+            ->orderBy('clients.id', 'ASC')
             ->findAll();
 
-        // 只挑出已經有經緯度的案主，準備交給地圖顯示
+        // 整理已有經緯度的案主，交給地圖顯示
         $mapClients = array_values(array_map(
             static function (array $client): array {
                 return [
-                    'id'       => (int) $client['id'],
-                    'name'     => $client['ct_name'],
-                    'address'  => $client['ct_addr'],
-                    'latitude' => (float) $client['latitude'],
-                    'longitude'=> (float) $client['longitude'],
-                    'order'    => (int) ($client['delivery_order'] ?? 0),
+                    'id'        => (int) $client['id'],
+                    'name'      => $client['ct_name'],
+                    'address'   => $client['ct_addr'],
+                    'latitude'  => (float) $client['profile_latitude'],
+                    'longitude' => (float) $client['profile_longitude'],
+                    'order'     => (int) ($client['delivery_order'] ?? 0),
                 ];
             },
             array_filter(
                 $clients,
                 static fn (array $client): bool =>
-                    is_numeric($client['latitude'] ?? null)
-                    && is_numeric($client['longitude'] ?? null)
+                    is_numeric($client['profile_latitude'] ?? null)
+                    && is_numeric($client['profile_longitude'] ?? null)
             )
         ));
 
-        // 轉成 JSON，並避免案主文字被當成 HTML 或 JavaScript 程式碼
+        // 避免案主資料被當成 HTML 或 JavaScript 程式碼
         $mapClientsJson = json_encode(
             $mapClients,
             JSON_UNESCAPED_UNICODE
@@ -263,20 +273,18 @@ class DeliveryRouteController extends Controller
             | JSON_HEX_QUOT
         );
 
-        // 傳給 Smarty 地圖模板
-        $smarty->assign('mapClientsJson', $mapClientsJson ?: '[]');
-        
+        // 先建立 Smarty，再傳入頁面資料
         $smarty = new SmartyEngine();
         $this->assignCommonData($smarty);
 
         $smarty->assign('route', $route);
         $smarty->assign('clients', $clients);
+        $smarty->assign('mapClientsJson', $mapClientsJson ?: '[]');
         $smarty->assign(
             'routeOrderUrl',
             base_url('delivery-routes/' . $routeId . '/clients/order')
         );
         $smarty->assign('csrfField', csrf_field());
-
         $smarty->assign(
             'successMessage',
             session()->getFlashdata('success') ?? ''

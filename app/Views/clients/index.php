@@ -483,40 +483,27 @@ $canManageClients = in_array(
 
 <!-- 這段 JavaScript 專門計算上方固定區塊的高度，並把結果交給 CSS 使用 -->
 <script>
-    // 等 HTML 文件解析完成後再執行，確保上方區塊已經出現在網頁中
     document.addEventListener('DOMContentLoaded', function () {
 
-        // 在頁面中尋找 class 為 client-sticky-top 的"元素"
-        // 這個元素包住上方固定的麵包屑、標題、搜尋列等內容
         const stickyTop = document.querySelector('.client-sticky-top');
 
-        // 如果目前頁面沒有這個元素，就結束程式
-        // 這樣可以避免後續讀取不存在元素時發生錯誤
         if (!stickyTop) {
             return;
         }
 
-        // 定義計算上方區塊高度的函式
         function updateStickyHeight() {
 
-            // 取得元素目前實際顯示的高度，單位是像素
             const height = stickyTop.getBoundingClientRect().height;
 
-            // 將高度寫到整份 HTML 文件的 CSS 自訂變數中
-            // CSS 就能透過 var(--client-sticky-top-height) 讀取這個值
             document.documentElement.style.setProperty(
                 '--client-sticky-top-height',
 
-                // CSS 的高度需要包含單位，因此在數字後面加上 px
                 height + 'px'
             );
         }
 
-        // 頁面載入時先計算一次，設定表格表頭的起始位置
         updateStickyHeight();
 
-        // 視窗尺寸改變時重新計算
-        // 例如瀏覽器視窗變窄、上方內容換行後，高度可能會改變
         window.addEventListener('resize', updateStickyHeight);
     });
 </script>
